@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>終身醫療金庫建構計畫</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; color: #333; padding: 20px; line-height: 1.6; }
+        .container { max-width: 950px; margin: auto; background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        h1 { color: #16a085; text-align: center; border-bottom: 2px solid #1abc9c; padding-bottom: 10px; margin-bottom: 30px;}
+        .form-row { display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }
+        .form-group { flex: 1; min-width: 45%; }
+        label { display: block; font-weight: bold; margin-bottom: 8px; color: #2c3e50; }
+        select { width: 100%; padding: 12px; border: 1px solid #bdc3c7; border-radius: 6px; font-size: 16px; background-color: #fdfefe; }
+        button { background-color: #16a085; color: #fff; padding: 15px; border: none; border-radius: 6px; cursor: pointer; font-size: 18px; width: 100%; font-weight: bold; margin-top: 10px; transition: 0.3s;}
+        button:hover { background-color: #138d75; }
+        
+        .result-box { margin-top: 30px; display: none; }
+        .summary-card { background: #eafaf1; border-left: 5px solid #2ecc71; padding: 15px; border-radius: 6px; margin-bottom: 25px; font-size: 18px; display: flex; justify-content: space-between; align-items: center;}
+        .highlight { color: #d35400; font-weight: bold; font-size: 24px; }
+        
+        /* 左右並排保障區塊 */
+        .comparison-container { display: flex; gap: 15px; margin-bottom: 25px; }
+        .comparison-col { flex: 1; background: #fff; border: 1px solid #cbd5e1; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.05);}
+        .col-header { padding: 15px; text-align: center; font-weight: bold; font-size: 18px; color: #fff; }
+        .header-pre { background-color: #3498db; }
+        .header-post { background-color: #e67e22; }
+        .benefit-list { list-style: none; padding: 0; margin: 0; }
+        .benefit-list li { padding: 12px 15px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;}
+        .benefit-list li:last-child { border-bottom: none; }
+        .b-title { color: #34495e; font-weight: bold; width: 60%; font-size: 15px;}
+        .b-amount { color: #c0392b; font-weight: bold; text-align: right; width: 40%;}
+
+        /* 5項疾病與自費警示區塊 */
+        .tsunami-alert { background: #fff3cd; border: 1px solid #ffeeba; border-left: 5px solid #ffc107; padding: 20px; border-radius: 8px; margin-top: 25px; }
+        .tsunami-alert h3 { margin-top: 0; color: #856404; font-size: 18px; }
+        .tsunami-table { width: 100%; border-collapse: collapse; margin-top: 10px; background: #fff;}
+        .tsunami-table th, .tsunami-table td { padding: 10px; border: 1px solid #ffeeba; text-align: left; font-size: 15px;}
+        .tsunami-table th { background-color: #ffe8a1; color: #856404; text-align: center;}
+        
+        .closing-script { background: #fdfefe; border: 1px solid #e5e8e8; padding: 25px; border-radius: 8px; margin-top: 30px; border-left: 5px solid #2c3e50; }
+        .closing-script p { font-size: 16px; color: #444; margin-bottom: 0; line-height: 1.8; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🛡️ 終身醫療金庫建構計畫</h1>
+    
+    <div class="form-row">
+        <div class="form-group">
+            <label>繳費年期：</label>
+            <select id="term" onchange="updateAgeOptions()">
+                <option value="10">10 年期 (0~70歲)</option>
+                <option value="20" selected>20 年期 (0~60歲)</option>
+                <option value="30">30 年期 (0~50歲)</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>被保險人性別：</label>
+            <select id="gender">
+                <option value="M">男性</option>
+                <option value="F">女性</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>投保年齡 (依級距代表)：</label>
+            <select id="age"></select>
+        </div>
+        <div class="form-group">
+            <label>投保計劃：</label>
+            <select id="plan">
+                <option value="10">計劃 10 (總額度250萬)</option>
+                <option value="20" selected>計劃 20 (總額度500萬)</option>
+                <option value="30">計劃 30 (總額度750萬)</option>
+            </select>
+        </div>
+    </div>
+
+    <button onclick="calculatePlan()">產出專屬規劃與保全報告</button>
+
+    <div id="resultBox" class="result-box">
+        <div class="summary-card" id="summaryContent"></div>
+        
+        <!-- 左右並排保障區塊 -->
+        <div class="comparison-container" id="comparisonContent"></div>
+
+        <!-- 5項高發疾病自費警示 -->
+        <div class="tsunami-alert">
+            <h3>⚠️ 為什麼 75 歲後的「實支實付」是守護老本的關鍵？</h3>
+            <p style="color: #664d03; margin-bottom: 10px; font-size:15px;">醫療科技日新月異，高齡階段最可怕的不是疾病本身，而是「健保不給付，自費付不起」。依據各醫療院所行情，以下為 75 歲後極易面臨的 5 大高昂自費項目：</p>
+            <table class="tsunami-table">
+                <tr>
+                    <th width="35%">高齡常見疾病與治療</th>
+                    <th width="25%">預估自負費用</th>
+                    <th width="40%">WEHS 實支實付應對優勢</th>
+                </tr>
+                <tr>
+                    <td><strong>心血管疾病</strong><br>心臟血管支架置放</td>
+                    <td style="color:#c0392b; font-weight:bold;">8萬 ~ 20萬元 / 支</td>
+                    <td>由【醫院各項雜費及手術費】核銷</td>
+                </tr>
+                <tr>
+                    <td><strong>泌尿道結石</strong><br>輸尿管鏡取石術及碎石術</td>
+                    <td style="color:#c0392b; font-weight:bold;">8萬 ~ 10萬元</td>
+                    <td>高額實支涵蓋微創雷射手術與高階耗材</td>
+                </tr>
+                <tr>
+                    <td><strong>重度退化性關節炎</strong><br>人工膝關節置換</td>
+                    <td style="color:#c0392b; font-weight:bold;">2萬 ~ 30萬元</td>
+                    <td>涵蓋耐磨墊片與優質金屬關節，免除長輩行動痛苦</td>
+                </tr>
+                <tr>
+                    <td><strong>精密微創手術</strong><br>達文西機械手臂手術</td>
+                    <td style="color:#c0392b; font-weight:bold;">15萬 ~ 30萬元</td>
+                    <td>讓長輩安心選用傷口小、復原快的頂尖醫療技術</td>
+                </tr>
+                <tr>
+                    <td><strong>高齡癌症抗戰</strong><br>標靶藥物 / 放射線(質子)治療</td>
+                    <td style="color:#c0392b; font-weight:bold;">標靶 約4萬~20萬/月<br>放射線 30萬~150萬元</td>
+                    <td>癌症雜費限額額外放大 1.3 倍，長期抗戰不拖累子女</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="closing-script">
+            <p id="scriptContent"></p>
+        </div>
+    </div>
+</div>
+
+<script>
+    // WEHS 代表費率庫
+    const rates = {
+        '10': {
+            'M': { '0': {'10': 33930, '20': 59500, '30': 85230}, '10': {'10': 40990, '20': 70950, '30': 101990}, '20': {'10': 52300, '20': 89630, '30': 128380}, '30': {'10': 64470, '20': 109030, '30': 154480}, '40': {'10': 79590, '20': 132130, '30': 185920}, '50': {'10': 102600, '20': 162360, '30': 227210}, '60': {'10': 134260, '20': 205060, '30': 286580}, '70': {'10': 165550, '20': 254820, '30': 353300} },
+            'F': { '0': {'10': 34170, '20': 59550, '30': 85600}, '10': {'10': 41170, '20': 70990, '30': 102020}, '20': {'10': 51770, '20': 88050, '30': 123340}, '30': {'10': 62760, '20': 105400, '30': 144340}, '40': {'10': 72710, '20': 117430, '30': 166380}, '50': {'10': 88160, '20': 141800, '30': 197830}, '60': {'10': 108140, '20': 173820, '30': 243660}, '70': {'10': 132200, '20': 203450, '30': 290990} }
+        },
+        '20': {
+            'M': { '0': {'10': 18750, '20': 32880, '30': 47350}, '10': {'10': 22650, '20': 39210, '30': 56660}, '20': {'10': 28900, '20': 49530, '30': 71320}, '30': {'10': 37050, '20': 62660, '30': 87770}, '40': {'10': 42790, '20': 71040, '30': 97850}, '50': {'10': 55100, '20': 87760, '30': 123080}, '60': {'10': 78560, '20': 119990, '30': 170990} },
+            'F': { '0': {'10': 18880, '20': 32910, '30': 47820}, '10': {'10': 22750, '20': 39230, '30': 56680}, '20': {'10': 28610, '20': 47960, '30': 69060}, '30': {'10': 35860, '20': 57280, '30': 80190}, '40': {'10': 39500, '20': 61160, '30': 88880}, '50': {'10': 48440, '20': 74630, '30': 104670}, '60': {'10': 62150, '20': 94470, '30': 134620} }
+        },
+        '30': {
+            'M': { '0': {'10': 13630, '20': 23890, '30': 34090}, '10': {'10': 16460, '20': 28490, '30': 40610}, '20': {'10': 20080, '20': 35000, '30': 49920}, '30': {'10': 25940, '20': 44320, '30': 62550}, '40': {'10': 33380, '20': 55650, '30': 71760}, '50': {'10': 44080, '20': 70210, '30': 97640} },
+            'F': { '0': {'10': 13720, '20': 23910, '30': 34270}, '10': {'10': 16530, '20': 28510, '30': 40620}, '20': {'10': 19880, '20': 33800, '30': 48340}, '30': {'10': 25100, '20': 40400, '30': 56930}, '40': {'10': 29230, '20': 47700, '30': 67550}, '50': {'10': 37300, '20': 57960, '30': 82340} }
+        }
+    };
+
+    const ben = {
+        '10': { max: '250萬', d_room: '1,000', d_cancer: '+300', d_icu: '+1,000', d_opd: '500', d_surg_in: '2,000', d_surg_out: '1,000', d_device: '5,000',
+                r_room_gen: '1,000', r_room_icu: '2,000', r_misc_gen: '10萬', r_misc_icu: '20萬', r_misc_cancer: '13萬', r_opd: '500', r_surg_gen: '2萬', r_surg_cancer: '2.6萬'},
+        '20': { max: '500萬', d_room: '2,000', d_cancer: '+600', d_icu: '+2,000', d_opd: '500', d_surg_in: '4,000', d_surg_out: '2,000', d_device: '10,000',
+                r_room_gen: '2,000', r_room_icu: '4,000', r_misc_gen: '20萬', r_misc_icu: '40萬', r_misc_cancer: '26萬', r_opd: '500', r_surg_gen: '4萬', r_surg_cancer: '5.2萬'},
+        '30': { max: '750萬', d_room: '3,000', d_cancer: '+900', d_icu: '+3,000', d_opd: '500', d_surg_in: '6,000', d_surg_out: '3,000', d_device: '15,000',
+                r_room_gen: '3,000', r_room_icu: '6,000', r_misc_gen: '30萬', r_misc_icu: '60萬', r_misc_cancer: '39萬', r_opd: '500', r_surg_gen: '6萬', r_surg_cancer: '7.8萬'}
+    };
+
+    function updateAgeOptions() {
+        const term = document.getElementById('term').value;
+        const ageSelect = document.getElementById('age');
+        ageSelect.innerHTML = ''; 
+        let maxAge = term === '10' ? 70 : (term === '20' ? 60 : 50);
+        
+        for(let i = 0; i <= maxAge; i+=10) {
+            let option = document.createElement('option');
+            option.value = i;
+            option.text = `${i} 歲 (級距代表)`;
+            if (i === 40) option.selected = true; 
+            ageSelect.appendChild(option);
+        }
+    }
+
+    function calculatePlan() {
+        const term = document.getElementById('term').value;
+        const gender = document.getElementById('gender').value;
+        const age = document.getElementById('age').value;
+        const plan = document.getElementById('plan').value;
+        
+        const annualPremium = rates[term][gender][age][plan];
+        const totalPremium = annualPremium * parseInt(term);
+        const deathBenefit = totalPremium * 1.06;
+        const p = ben[plan];
+
+        document.getElementById('summaryContent').innerHTML = `
+            <div>
+                ${term} 年期總投入預算：<strong style="font-size:22px;">${(totalPremium/10000).toFixed(2)} 萬元</strong> <br>
+                無損保本傳承金底線：<span class="highlight">${Math.round(deathBenefit).toLocaleString()} 元</span> <br>
+                <span style="font-size:14px; color:#555;">(註：總繳保費 × 1.06，傳承時需扣除已領醫療理賠金)</span>
+            </div>
+            <div style="text-align:right;">
+                <span style="font-size:14px; color:#7f8c8d;">雙階段總給付高達</span><br>
+                <strong style="color:#2980b9; font-size:32px;">${p.max}</strong>
+            </div>
+        `;
+
+        document.getElementById('comparisonContent').innerHTML = `
+            <!-- 左側：74歲前 定額給付 -->
+            <div class="comparison-col">
+                <div class="col-header header-pre">保險年齡達 74 歲(不含)前<br><span style="font-size:14px;">【定額給付】最高上限 ${p.max}</span></div>
+                <ul class="benefit-list">
+                    <li><span class="b-title">住院日額保險金 / 日</span><span class="b-amount">${p.d_room}</span></li>
+                    <li><span class="b-title">癌症住院日額 / 日</span><span class="b-amount">${p.d_cancer}</span></li>
+                    <li><span class="b-title">加護病房暨燒燙傷中心 / 日</span><span class="b-amount">${p.d_icu}</span></li>
+                    <li><span class="b-title">住院手術醫療保險金 / 次</span><span class="b-amount">${p.d_surg_in}</span></li>
+                    <li><span class="b-title">門診手術醫療保險金 / 次</span><span class="b-amount">${p.d_surg_out}</span></li>
+                    <li><span class="b-title">住院前後門診保險金 / 次</span><span class="b-amount">${p.d_opd}</span></li>
+                    <li><span class="b-title">特殊醫材補助保險金 / 次<br><small style="color:#7f8c8d; font-weight:normal;">(限5項特定醫材，上限10次)</small></span><span class="b-amount">${p.d_device}</span></li>
+                </ul>
+            </div>
+
+            <!-- 右側：74歲後 實支實付 -->
+            <div class="comparison-col">
+                <div class="col-header header-post">保險年齡達 74 歲(含)起<br><span style="font-size:14px;">【實支實付】最高限額 ${p.max}</span></div>
+                <ul class="benefit-list">
+                    <li><span class="b-title">每日病房費用限額<br><small style="color:#7f8c8d; font-weight:normal;">(一般病房 / 曾住重症病房)</small></span>
+                        <span class="b-amount">${p.r_room_gen} / <span style="color:#e67e22;">${p.r_room_icu}</span></span></li>
+                    <li><span class="b-title">醫院各項雜費及手術費限額<br><small style="color:#7f8c8d; font-weight:normal;">(涵蓋達文西、高階醫材)</small></span>
+                        <span class="b-amount">${p.r_misc_gen}</span></li>
+                    <li><span class="b-title">上項若曾住重症病房限額</span><span class="b-amount" style="color:#e67e22;">${p.r_misc_icu}</span></li>
+                    <li><span class="b-title">上項若為癌症治療限額</span><span class="b-amount" style="color:#e67e22;">${p.r_misc_cancer}</span></li>
+                    <li><span class="b-title">門診手術費用限額 / 次<br><small style="color:#7f8c8d; font-weight:normal;">(若為癌症門診手術放大為 ${p.r_surg_cancer})</small></span>
+                        <span class="b-amount">${p.r_surg_gen}</span></li>
+                    <li><span class="b-title">住院前後門診費用限額 / 次</span><span class="b-amount">${p.r_opd}</span></li>
+                    <li style="justify-content: center; background: #f9f9f9;"><span class="b-title" style="width:100%; text-align:center; font-size:13px; color:#7f8c8d;">※滿74歲後，亦可依需求選擇切換為「日額給付型」</span></li>
+                </ul>
+            </div>
+        `;
+
+        document.getElementById('scriptContent').innerHTML = `
+            高資產與中產階級在晚年最大的財務風險，往往不是沒錢生活，而是『因病導致資產大幅縮水』。<br><br>
+            這份計畫最大的戰略價值在於<b>【精準的風險隔離】</b>與<b>【無損的資產保全】</b>。透過每年 ${(annualPremium/10000).toFixed(2)} 萬的固定預算，我們在您 74 歲（含）之後建構了一道高達 ${p.max} 的『實支實付防波堤』。未來無論是達文西微創手術、高價標靶藥物，或是精密的人工關節，都由這套系統為您買單，徹底阻絕了高昂醫療自費對您退休老本的侵蝕。<br><br>
+            更重要的是，這筆預算並非消費支出。若您一生康健平安，這筆高達 ${Math.round(deathBenefit).toLocaleString()} 元的保本金將完好無缺，並透過保單<b>『指定受益人』</b>的特性，免除民法特留分的干擾，精準傳承給您的摯愛。<br><br>
+            將龐大且不確定的醫療支出，轉嫁給確定的保險機制，才是最穩健的財富守護之道。為了您的醫療尊嚴與資產安全，建議我們今天就啟動這份專屬的終身醫療金庫計畫。
+        `;
+
+        document.getElementById('resultBox').style.display = 'block';
+    }
+
+    window.onload = updateAgeOptions;
+</script>
+
+</body>
+</html>
