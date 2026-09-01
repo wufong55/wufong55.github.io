@@ -50,7 +50,7 @@
         .closing-script { background: #fdfefe; border: 1px solid #e5e8e8; padding: 25px; border-radius: 8px; margin-bottom: 20px; border-left: 5px solid #2c3e50; }
         .closing-script p { font-size: 16px; color: #444; margin-bottom: 0; line-height: 1.8; }
         
-        /* 升級提示面板 (移至最後) */
+        /* 升級提示面板 */
         .upgrade-alert { display: none; background: #eafaf1; border: 1px solid #c8e6c9; border-left: 6px solid #2ecc71; padding: 20px; border-radius: 8px; margin-bottom: 20px; margin-top: 20px; animation: pulse 2s infinite; }
         .upgrade-alert h3 { margin-top: 0; color: #27ae60; font-size: 18px; margin-bottom: 10px;}
         .btn-upgrade { background-color: #27ae60; color: white; border: none; padding: 10px 20px; font-size: 16px; font-weight: bold; border-radius: 5px; cursor: pointer; width: auto; margin-top: 10px; box-shadow: 0 4px 6px rgba(39, 174, 96, 0.3); transition: 0.2s;}
@@ -137,7 +137,7 @@
 
         <!-- 列印時，此處將強制換頁 -->
 
-        <!-- 保費黃金交叉面板 -->
+        <!-- 保費黃金交叉面板 (純 1HIR + 1HSCO 嚴格對標版) -->
         <div class="cross-analysis" id="crossAnalysis"></div>
 
         <!-- 顧問收網結語 -->
@@ -145,11 +145,11 @@
             <p id="scriptContent"></p>
         </div>
         
-        <!-- 槓桿倍數一鍵升級面板 (移至銷售動線最後方) -->
+        <!-- 槓桿倍數一鍵升級面板 (進階試算) -->
         <div id="upgradeAlert" class="upgrade-alert"></div>
 
         <div class="disclaimer">
-            本試算僅供參考，實際保費與理賠認定以保單條款為準。定期險試算基準為 1HIR+1HS+1HSCO 動態對應保額累計至85歲之概算。
+            本試算僅供參考，實際保費與理賠認定以保單條款為準。定期險對標基準為 1HIR(日額型)+1HSCO A-I型(75歲啟動實支) 動態對應保額累計至85歲之概算。
         </div>
 
         <button class="btn-print" onclick="window.print()">🖨️ 儲存為 PDF / 列印專屬報告</button>
@@ -173,10 +173,11 @@
         }
     };
     
-    // 定期險組合基準 (以保額單位 10 為基礎, 計算至 85歲 的概算總成本)
+    // 【更新核心】：定期險組合基準 (僅以 1HIR + 1HSCO A-I型 累計至 85歲 的保費概算)
+    // 演算法將依據選取的 WEHS 計畫 (10/20/30) 進行等比例保額放大：termBaseCumulative * (plan/10)
     const termBaseCumulative = {
-        'M': { '0': 1100000, '5': 1050000, '10': 1000000, '15': 950000, '20': 900000, '25': 850000, '30': 800000, '35': 770000, '40': 740000, '45': 700000, '50': 650000, '55': 590000, '60': 520000, '65': 430000, '70': 320000 },
-        'F': { '0': 1150000, '5': 1100000, '10': 1050000, '15': 1000000, '20': 950000, '25': 900000, '30': 850000, '35': 810000, '40': 770000, '45': 720000, '50': 660000, '55': 580000, '60': 500000, '65': 410000, '70': 300000 }
+        'M': { '0': 1000000, '5': 970000, '10': 940000, '15': 910000, '20': 880000, '25': 850000, '30': 810000, '35': 780000, '40': 750000, '45': 710000, '50': 660000, '55': 600000, '60': 530000, '65': 440000, '70': 330000 },
+        'F': { '0': 880000, '5': 860000, '10': 840000, '15': 820000, '20': 800000, '25': 780000, '30': 760000, '35': 740000, '40': 710000, '45': 670000, '50': 620000, '55': 560000, '60': 490000, '65': 400000, '70': 290000 }
     };
 
     const ben = {
@@ -234,7 +235,7 @@
         const deathBenefit = totalPremium * 1.06;
         const p = ben[plan];
 
-        // 升級模組 (依據目前選擇動態推導)
+        // 進階試算模組 (一鍵切換，移至最下方)
         if(plan === '10') {
             const p20_premium = rates[term][gender][age]['20'];
             const diff_premium = p20_premium - annualPremium;
@@ -271,24 +272,24 @@
             document.getElementById('upgradeAlert').style.display = 'none';
         }
 
-        // 黃金交叉動態連動運算
+        // 黃金交叉動態連動運算 (僅計算 1HIR + 1HSCO)
         const termTotal = termBaseCumulative[gender][age] * (parseInt(plan) / 10);
         const wehsWidth = Math.min((totalPremium / Math.max(totalPremium, termTotal)) * 100, 100);
         const termWidth = Math.min((termTotal / Math.max(totalPremium, termTotal)) * 100, 100);
 
         document.getElementById('crossAnalysis').innerHTML = `
             <h3>📈 保費黃金交叉分析 (對決定期險迷思)</h3>
-            <p style="font-size:15px; color:#555; margin-bottom:10px;">許多人以為定期險(1HIR+1HS+1HSCO)較便宜，但若將<b>定期險保額調整為與 WEHS 計畫 ${plan} 相同基準</b>，計算至 85 歲，您會發現其保費呈指數型飆升：</p>
+            <p style="font-size:15px; color:#555; margin-bottom:10px;">許多人以為定期險較便宜，但若將<b>定期險保額(1HIR+1HSCO)動態調整為與 WEHS 計畫 ${plan} 同等基準</b>，計算至 85 歲，您會發現其保費呈指數型飆升：</p>
             <div style="font-size:14px; margin-bottom:5px;"><strong>WEHS 計畫 ${plan} (${term}年總繳，保障終身)</strong></div>
             <div class="bar-container">
                 <div class="bar-wehs" style="width: ${wehsWidth}%;">${Math.round(totalPremium/10000)} 萬元</div>
             </div>
-            <div style="font-size:14px; margin-bottom:5px;"><strong>同等保額之定期險組合 (繳至85歲預估總成本，保障中斷)</strong></div>
+            <div style="font-size:14px; margin-bottom:5px;"><strong>同保額之定期險組合 (繳至85歲預估總成本，保障中斷)</strong></div>
             <div class="bar-container">
                 <div class="bar-term" style="width: ${termWidth}%;">${Math.round(termTotal/10000)} 萬元</div>
             </div>
             <div style="background:#fef9e7; padding:10px; border-radius:5px; margin-top:10px; font-size:14px; color:#d35400;">
-                🔥 <b>殘酷真相：</b>同等額度的定期險不僅總成本高出許多，且在最容易生病的 85 歲後保障歸零；WEHS 繳滿後不必再繳，持續提供最高 ${p.max} 的醫療金庫，未用盡更可傳承給下一代。
+                🔥 <b>殘酷真相：</b>即使不計入 74 歲前的實支費用，同等保額的定期險總成本依然極高，且在最容易生病的 85 歲後保障歸零；WEHS 繳滿後不必再繳，持續提供最高 ${p.max} 的醫療金庫，未用盡更可保本傳承。
             </div>
         `;
 
