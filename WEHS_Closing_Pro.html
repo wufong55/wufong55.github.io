@@ -18,7 +18,8 @@
         .btn-print:hover { background-color: #2471a3; }
         
         .result-box { margin-top: 30px; display: none; }
-        .summary-card { background: #eafaf1; border-left: 5px solid #2ecc71; padding: 20px; border-radius: 6px; margin-bottom: 25px; font-size: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;}
+        
+        .summary-card { background: #f4f6f7; border-left: 5px solid #34495e; padding: 20px; border-radius: 6px; margin-bottom: 25px; font-size: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;}
         .highlight { color: #d35400; font-weight: bold; font-size: 22px; }
         
         /* 左右並排保障區塊 */
@@ -33,41 +34,43 @@
         .b-title { color: #34495e; font-weight: bold; width: 55%; font-size: 14px;}
         .b-amount { color: #c0392b; font-weight: bold; text-align: right; width: 45%; font-size: 15px;}
 
-        /* 5項疾病與自費警示區塊 */
-        .tsunami-alert { background: #fff3cd; border: 1px solid #ffeeba; border-left: 5px solid #ffc107; padding: 20px; border-radius: 8px; margin-top: 25px; }
-        .tsunami-alert h3 { margin-top: 0; color: #856404; font-size: 18px; }
-        .table-responsive { overflow-x: auto; margin-top: 10px; }
-        .tsunami-table { width: 100%; border-collapse: collapse; background: #fff; min-width: 600px;}
+        /* 疾病警示區塊 */
+        .tsunami-alert { background: #fff3cd; border: 1px solid #ffeeba; border-left: 5px solid #ffc107; padding: 20px; border-radius: 8px; margin-bottom: 25px; }
+        .tsunami-table { width: 100%; border-collapse: collapse; background: #fff; min-width: 600px; margin-top:10px;}
         .tsunami-table th, .tsunami-table td { padding: 10px; border: 1px solid #ffeeba; text-align: left; font-size: 14px;}
         .tsunami-table th { background-color: #ffe8a1; color: #856404; text-align: center;}
         
-        .closing-script { background: #fdfefe; border: 1px solid #e5e8e8; padding: 20px; border-radius: 8px; margin-top: 30px; border-left: 5px solid #2c3e50; }
-        .closing-script p { font-size: 15px; color: #444; margin-bottom: 0; line-height: 1.8; }
+        /* 黃金交叉分析面板 */
+        .cross-analysis { background: #fdfefe; border: 1px solid #e5e8e8; border-radius: 8px; padding: 20px; margin-bottom: 25px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border-top: 4px solid #e74c3c;}
+        .cross-analysis h3 { margin-top: 0; color: #c0392b; font-size: 20px;}
+        .bar-container { width: 100%; background-color: #ecf0f1; border-radius: 6px; margin-bottom: 10px; overflow: hidden; position: relative; height: 35px;}
+        .bar-wehs { height: 100%; background-color: #2980b9; text-align: right; line-height: 35px; color: white; padding-right: 10px; font-weight: bold; white-space: nowrap; transition: width 1s ease-in-out;}
+        .bar-term { height: 100%; background-color: #e74c3c; text-align: right; line-height: 35px; color: white; padding-right: 10px; font-weight: bold; white-space: nowrap; transition: width 1s ease-in-out;}
+
+        .closing-script { background: #fdfefe; border: 1px solid #e5e8e8; padding: 25px; border-radius: 8px; margin-bottom: 20px; border-left: 5px solid #2c3e50; }
+        .closing-script p { font-size: 16px; color: #444; margin-bottom: 0; line-height: 1.8; }
         
-        /* 免責聲明 */
+        /* 升級提示面板 */
+        .upgrade-alert { display: none; background: #eafaf1; border: 1px solid #c8e6c9; border-left: 6px solid #2ecc71; padding: 20px; border-radius: 8px; margin-bottom: 20px; margin-top: 20px; animation: pulse 2s infinite; }
+        .upgrade-alert h3 { margin-top: 0; color: #27ae60; font-size: 18px; margin-bottom: 10px;}
+        .btn-upgrade { background-color: #27ae60; color: white; border: none; padding: 10px 20px; font-size: 16px; font-weight: bold; border-radius: 5px; cursor: pointer; width: auto; margin-top: 10px; box-shadow: 0 4px 6px rgba(39, 174, 96, 0.3); transition: 0.2s;}
+        .btn-upgrade:hover { background-color: #219a52; transform: translateY(-2px); box-shadow: 0 6px 8px rgba(39, 174, 96, 0.4);}
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(46, 204, 113, 0); } 100% { box-shadow: 0 0 0 0 rgba(46, 204, 113, 0); } }
+
         .disclaimer { font-size: 13px; color: #7f8c8d; text-align: center; margin-top: 25px; border-top: 1px dashed #bdc3c7; padding-top: 15px; }
 
-        /* --- 手機端 RWD 專屬優化 --- */
         @media screen and (max-width: 768px) {
-            body { padding: 10px; }
-            .container { padding: 15px; }
-            h1 { font-size: 20px; }
-            .form-group { min-width: 100%; }
             .summary-card { flex-direction: column; align-items: flex-start; }
-            .summary-card > div:last-child { text-align: left; width: 100%; margin-top: 10px; border-top: 1px solid #c8e6c9; padding-top: 10px;}
             .comparison-col { min-width: 100%; }
+            .tsunami-alert { overflow-x: auto; }
+            .upgrade-content { flex-direction: column; align-items: flex-start; }
+            .btn-upgrade { width: 100%; text-align: center; }
         }
-
-        /* --- PDF 匯出與列印的專屬排版優化 --- */
         @media print {
-            body { background-color: #fff; padding: 0; }
-            .container { box-shadow: none; max-width: 100%; padding: 0; }
-            button, select, label { display: none !important; }
-            .form-row { display: none !important; }
-            .tsunami-alert { page-break-inside: avoid; }
+            button, select, label, .form-row, .upgrade-alert { display: none !important; }
+            .tsunami-alert, .cross-analysis { page-break-inside: avoid; }
+            .cross-analysis { break-before: page; page-break-before: always; }
             .closing-script { page-break-inside: avoid; border: none; padding: 0; margin-top: 20px; border-left: 5px solid #2c3e50; padding-left: 15px;}
-            .table-responsive { overflow-x: visible; }
-            .tsunami-table { min-width: 100%; }
         }
     </style>
 </head>
@@ -93,14 +96,14 @@
             </select>
         </div>
         <div class="form-group">
-            <label>投保年齡：</label>
+            <label>投保年齡 (每5歲級距)：</label>
             <select id="age"></select>
         </div>
         <div class="form-group">
             <label>投保計劃：</label>
-            <select id="plan">
-                <option value="10">計劃 10 (總額度250萬)</option>
-                <option value="20" selected>計劃 20 (總額度500萬)</option>
+            <select id="plan" onchange="checkUpgrade()">
+                <option value="10" selected>計劃 10 (總額度250萬)</option>
+                <option value="20">計劃 20 (總額度500萬)</option>
                 <option value="30">計劃 30 (總額度750萬)</option>
             </select>
         </div>
@@ -109,164 +112,72 @@
     <button onclick="calculatePlan()">產出專屬規劃與保全報告</button>
 
     <div id="resultBox" class="result-box">
-        <div class="summary-card" id="summaryContent"></div>
         
-        <!-- 左右並排保障區塊 -->
+        <!-- 基礎摘要 -->
+        <div class="summary-card" id="summaryContent"></div>
+
+        <!-- 雙階段保障 -->
         <div class="comparison-container" id="comparisonContent"></div>
 
-        <!-- 5項高發疾病自費警示 -->
+        <!-- 高齡自費海嘯警示 -->
         <div class="tsunami-alert">
-            <h3>⚠️ 為什麼 75 歲後的「實支實付」是守護老本的關鍵？</h3>
-            <p style="color: #664d03; margin-bottom: 10px; font-size:14px;">醫療科技日新月異，高齡階段最可怕的不是疾病本身，而是「健保不給付，自費付不起」。依據各醫療院所行情，以下為 75 歲後極易面臨的 5 大高昂自費項目：</p>
-            <div class="table-responsive">
+            <h3 style="color: #856404; margin-top:0;">⚠️ 為什麼 75 歲後的「實支實付」是守護老本的關鍵？</h3>
+            <p style="font-size:14px; color:#664d03; margin-bottom:10px;">醫療科技日新月異，高齡階段最可怕的不是疾病本身，而是「健保不給付，自費付不起」。以下為 75 歲後極易面臨的 5 大高昂自費項目：</p>
+            <div style="overflow-x: auto;">
                 <table class="tsunami-table">
-                    <tr>
-                        <th width="35%">高齡常見疾病與治療</th>
-                        <th width="25%">預估自負費用</th>
-                        <th width="40%">WEHS 實支實付應對優勢</th>
-                    </tr>
-                    <tr>
-                        <td><strong>心血管疾病</strong><br>心臟血管支架置放</td>
-                        <td style="color:#c0392b; font-weight:bold;">8萬 ~ 20萬元 / 支</td>
-                        <td>由【醫院各項雜費及手術費】核銷</td>
-                    </tr>
-                    <tr>
-                        <td><strong>泌尿道結石</strong><br>輸尿管鏡取石術及碎石術</td>
-                        <td style="color:#c0392b; font-weight:bold;">8萬 ~ 10萬元</td>
-                        <td>高額實支涵蓋微創雷射手術與高階耗材</td>
-                    </tr>
-                    <tr>
-                        <td><strong>重度退化性關節炎</strong><br>人工膝關節置換</td>
-                        <td style="color:#c0392b; font-weight:bold;">2萬 ~ 30萬元</td>
-                        <td>涵蓋耐磨墊片與優質金屬關節，免除長輩行動痛苦</td>
-                    </tr>
-                    <tr>
-                        <td><strong>精密微創手術</strong><br>達文西機械手臂手術</td>
-                        <td style="color:#c0392b; font-weight:bold;">15萬 ~ 30萬元</td>
-                        <td>讓長輩安心選用傷口小、復原快的頂尖醫療技術</td>
-                    </tr>
-                    <tr>
-                        <td><strong>高齡癌症抗戰</strong><br>標靶藥物 / 放射線(質子)治療</td>
-                        <td style="color:#c0392b; font-weight:bold;">標靶 約4萬~20萬/月<br>放射線 30萬~150萬元</td>
-                        <td>癌症雜費限額額外放大 1.3 倍，長期抗戰不拖累子女</td>
-                    </tr>
+                    <tr><th>高齡常見疾病與治療</th><th>預估自負費用</th><th>WEHS 實支實付應對優勢</th></tr>
+                    <tr><td><strong>心血管疾病</strong><br>心臟血管支架置放</td><td style="color:#c0392b; font-weight:bold;">8萬 ~ 20萬元 / 支</td><td>由【醫院各項雜費及手術費】核銷</td></tr>
+                    <tr><td><strong>泌尿道結石</strong><br>輸尿管鏡取石術及碎石術</td><td style="color:#c0392b; font-weight:bold;">8萬 ~ 10萬元</td><td>高額實支涵蓋微創雷射手術與高階耗材</td></tr>
+                    <tr><td><strong>重度退化性關節炎</strong><br>人工膝關節置換</td><td style="color:#c0392b; font-weight:bold;">2萬 ~ 30萬元</td><td>涵蓋耐磨墊片與優質金屬關節，免除長輩行動痛苦</td></tr>
+                    <tr><td><strong>精密微創手術</strong><br>達文西機械手臂手術</td><td style="color:#c0392b; font-weight:bold;">15萬 ~ 30萬元</td><td>讓長輩安心選用傷口小、復原快的高階技術</td></tr>
+                    <tr><td><strong>高齡癌症抗戰</strong><br>標靶藥物 / 放射線治療</td><td style="color:#c0392b; font-weight:bold;">標靶 約4萬~20萬/月<br>放射線 30萬~150萬元</td><td>癌症雜費限額放大 1.3 倍，長期抗戰不拖累子女</td></tr>
                 </table>
             </div>
         </div>
 
+        <!-- 列印時，此處將強制換頁 -->
+
+        <!-- 保費黃金交叉面板 (純 1HIR + 1HSCO 嚴格對標版) -->
+        <div class="cross-analysis" id="crossAnalysis"></div>
+
+        <!-- 顧問收網結語 -->
         <div class="closing-script">
             <p id="scriptContent"></p>
         </div>
         
-        <!-- 免責聲明 -->
+        <!-- 槓桿倍數一鍵升級面板 (進階試算) -->
+        <div id="upgradeAlert" class="upgrade-alert"></div>
+
         <div class="disclaimer">
-            本試算僅供參考，實際保費與理賠認定以保單條款為準。
+            本試算僅供參考，實際保費與理賠認定以保單條款為準。定期險對標基準為 1HIR(日額型)+1HSCO A-I型(75歲啟動實支) 動態對應保額累計至85歲之概算。
         </div>
 
-        <!-- 匯出與列印按鈕 -->
         <button class="btn-print" onclick="window.print()">🖨️ 儲存為 PDF / 列印專屬報告</button>
     </div>
 </div>
 
 <script>
-    // WEHS 5歲級距真實費率表 (依據 2026年5月版 DM)
+    // WEHS 5歲級距真實費率庫
     const rates = {
         '10': {
-            'M': { 
-                '0': {'10': 33930, '20': 59500, '30': 85230}, 
-                '5': {'10': 37480, '20': 65250, '30': 93630}, 
-                '10': {'10': 40990, '20': 70950, '30': 101990}, 
-                '15': {'10': 46640, '20': 80300, '30': 115190}, 
-                '20': {'10': 52300, '20': 89630, '30': 128380}, 
-                '25': {'10': 58400, '20': 99330, '30': 141430}, 
-                '30': {'10': 64470, '20': 109030, '30': 154480}, 
-                '35': {'10': 72020, '20': 120580, '30': 170180}, 
-                '40': {'10': 79590, '20': 132130, '30': 185920}, 
-                '45': {'10': 90020, '20': 146200, '30': 205920}, 
-                '50': {'10': 102600, '20': 162360, '30': 227210}, 
-                '55': {'10': 116920, '20': 181530, '30': 253770}, 
-                '60': {'10': 134260, '20': 205060, '30': 286580}, 
-                '65': {'10': 149450, '20': 228990, '30': 319080}, 
-                '70': {'10': 165550, '20': 254820, '30': 353300} 
-            },
-            'F': { 
-                '0': {'10': 34170, '20': 59550, '30': 85600}, 
-                '5': {'10': 37670, '20': 65250, '30': 93800}, 
-                '10': {'10': 41170, '20': 70990, '30': 102020}, 
-                '15': {'10': 46470, '20': 79540, '30': 112670}, 
-                '20': {'10': 51770, '20': 88050, '30': 123340}, 
-                '25': {'10': 57270, '20': 96750, '30': 133840}, 
-                '30': {'10': 62760, '20': 105400, '30': 144340}, 
-                '35': {'10': 67760, '20': 111400, '30': 155340}, 
-                '40': {'10': 72710, '20': 117430, '30': 166380}, 
-                '45': {'10': 80630, '20': 129270, '30': 182000}, 
-                '50': {'10': 88160, '20': 141800, '30': 197830}, 
-                '55': {'10': 97420, '20': 156290, '30': 218510}, 
-                '60': {'10': 108140, '20': 173820, '30': 243660}, 
-                '65': {'10': 117400, '20': 186790, '30': 266660}, 
-                '70': {'10': 132200, '20': 203450, '30': 290990} 
-            }
+            'M': { '0': {'10': 33930, '20': 59500, '30': 85230}, '5': {'10': 37480, '20': 65250, '30': 93630}, '10': {'10': 40990, '20': 70950, '30': 101990}, '15': {'10': 46640, '20': 80300, '30': 115190}, '20': {'10': 52300, '20': 89630, '30': 128380}, '25': {'10': 58400, '20': 99330, '30': 141430}, '30': {'10': 64470, '20': 109030, '30': 154480}, '35': {'10': 72020, '20': 120580, '30': 170180}, '40': {'10': 79590, '20': 132130, '30': 185920}, '45': {'10': 90020, '20': 146200, '30': 205920}, '50': {'10': 102600, '20': 162360, '30': 227210}, '55': {'10': 116920, '20': 181530, '30': 253770}, '60': {'10': 134260, '20': 205060, '30': 286580}, '65': {'10': 149450, '20': 228990, '30': 319080}, '70': {'10': 165550, '20': 254820, '30': 353300} },
+            'F': { '0': {'10': 34170, '20': 59550, '30': 85600}, '5': {'10': 37670, '20': 65250, '30': 93800}, '10': {'10': 41170, '20': 70990, '30': 102020}, '15': {'10': 46470, '20': 79540, '30': 112670}, '20': {'10': 51770, '20': 88050, '30': 123340}, '25': {'10': 57270, '20': 96750, '30': 133840}, '30': {'10': 62760, '20': 105400, '30': 144340}, '35': {'10': 67760, '20': 111400, '30': 155340}, '40': {'10': 72710, '20': 117430, '30': 166380}, '45': {'10': 80630, '20': 129270, '30': 182000}, '50': {'10': 88160, '20': 141800, '30': 197830}, '55': {'10': 97420, '20': 156290, '30': 218510}, '60': {'10': 108140, '20': 173820, '30': 243660}, '65': {'10': 117400, '20': 186790, '30': 266660}, '70': {'10': 132200, '20': 203450, '30': 290990} }
         },
         '20': {
-            'M': { 
-                '0': {'10': 18750, '20': 32880, '30': 47350}, 
-                '5': {'10': 20700, '20': 36030, '30': 52000}, 
-                '10': {'10': 22650, '20': 39210, '30': 56660}, 
-                '15': {'10': 25800, '20': 44360, '30': 64010}, 
-                '20': {'10': 28900, '20': 49530, '30': 71320}, 
-                '25': {'10': 33000, '20': 56080, '30': 79570}, 
-                '30': {'10': 37050, '20': 62660, '30': 87770}, 
-                '35': {'10': 39900, '20': 66860, '30': 92820}, 
-                '40': {'10': 42790, '20': 71040, '30': 97850}, 
-                '45': {'10': 48500, '20': 78770, '30': 109880}, 
-                '50': {'10': 55100, '20': 87760, '30': 123080}, 
-                '55': {'10': 63200, '20': 98660, '30': 138370}, 
-                '60': {'10': 78560, '20': 119990, '30': 170990} 
-            },
-            'F': { 
-                '0': {'10': 18880, '20': 32910, '30': 47820}, 
-                '5': {'10': 20830, '20': 36060, '30': 52270}, 
-                '10': {'10': 22750, '20': 39230, '30': 56680}, 
-                '15': {'10': 25700, '20': 43580, '30': 62880}, 
-                '20': {'10': 28610, '20': 47960, '30': 69060}, 
-                '25': {'10': 32260, '20': 52610, '30': 74610}, 
-                '30': {'10': 35860, '20': 57280, '30': 80190}, 
-                '35': {'10': 37660, '20': 59230, '30': 84540}, 
-                '40': {'10': 39500, '20': 61160, '30': 88880}, 
-                '45': {'10': 43800, '20': 67330, '30': 97430}, 
-                '50': {'10': 48440, '20': 74630, '30': 104670}, 
-                '55': {'10': 54120, '20': 82260, '30': 115370}, 
-                '60': {'10': 62150, '20': 94470, '30': 134620} 
-            }
+            'M': { '0': {'10': 18750, '20': 32880, '30': 47350}, '5': {'10': 20700, '20': 36030, '30': 52000}, '10': {'10': 22650, '20': 39210, '30': 56660}, '15': {'10': 25800, '20': 44360, '30': 64010}, '20': {'10': 28900, '20': 49530, '30': 71320}, '25': {'10': 33000, '20': 56080, '30': 79570}, '30': {'10': 37050, '20': 62660, '30': 87770}, '35': {'10': 39900, '20': 66860, '30': 92820}, '40': {'10': 42790, '20': 71040, '30': 97850}, '45': {'10': 48500, '20': 78770, '30': 109880}, '50': {'10': 55100, '20': 87760, '30': 123080}, '55': {'10': 63200, '20': 98660, '30': 138370}, '60': {'10': 78560, '20': 119990, '30': 170990} },
+            'F': { '0': {'10': 18880, '20': 32910, '30': 47820}, '5': {'10': 20830, '20': 36060, '30': 52270}, '10': {'10': 22750, '20': 39230, '30': 56680}, '15': {'10': 25700, '20': 43580, '30': 62880}, '20': {'10': 28610, '20': 47960, '30': 69060}, '25': {'10': 32260, '20': 52610, '30': 74610}, '30': {'10': 35860, '20': 57280, '30': 80190}, '35': {'10': 37660, '20': 59230, '30': 84540}, '40': {'10': 39500, '20': 61160, '30': 88880}, '45': {'10': 43800, '20': 67330, '30': 97430}, '50': {'10': 48440, '20': 74630, '30': 104670}, '55': {'10': 54120, '20': 82260, '30': 115370}, '60': {'10': 62150, '20': 94470, '30': 134620} }
         },
         '30': {
-            'M': { 
-                '0': {'10': 13630, '20': 23890, '30': 34090}, 
-                '5': {'10': 15030, '20': 26190, '30': 37340}, 
-                '10': {'10': 16460, '20': 28490, '30': 40610}, 
-                '15': {'10': 18260, '20': 31740, '30': 45260}, 
-                '20': {'10': 20080, '20': 35000, '30': 49920}, 
-                '25': {'10': 23030, '20': 39650, '30': 56220}, 
-                '30': {'10': 25940, '20': 44320, '30': 62550}, 
-                '35': {'10': 29640, '20': 49970, '30': 67150}, 
-                '40': {'10': 33380, '20': 55650, '30': 71760}, 
-                '45': {'10': 38150, '20': 61970, '30': 80580}, 
-                '50': {'10': 44080, '20': 70210, '30': 97640} 
-            },
-            'F': { 
-                '0': {'10': 13720, '20': 23910, '30': 34270}, 
-                '5': {'10': 15120, '20': 26210, '30': 37470}, 
-                '10': {'10': 16530, '20': 28510, '30': 40620}, 
-                '15': {'10': 18230, '20': 31160, '30': 44470}, 
-                '20': {'10': 19880, '20': 33800, '30': 48340}, 
-                '25': {'10': 22480, '20': 37100, '30': 52640}, 
-                '30': {'10': 25100, '20': 40400, '30': 56930}, 
-                '35': {'10': 27150, '20': 44050, '30': 62230}, 
-                '40': {'10': 29230, '20': 47700, '30': 67550}, 
-                '45': {'10': 32700, '20': 52290, '30': 74050}, 
-                '50': {'10': 37300, '20': 57960, '30': 82340} 
-            }
+            'M': { '0': {'10': 13630, '20': 23890, '30': 34090}, '5': {'10': 15030, '20': 26190, '30': 37340}, '10': {'10': 16460, '20': 28490, '30': 40610}, '15': {'10': 18260, '20': 31740, '30': 45260}, '20': {'10': 20080, '20': 35000, '30': 49920}, '25': {'10': 23030, '20': 39650, '30': 56220}, '30': {'10': 25940, '20': 44320, '30': 62550}, '35': {'10': 29640, '20': 49970, '30': 67150}, '40': {'10': 33380, '20': 55650, '30': 71760}, '45': {'10': 38150, '20': 61970, '30': 80580}, '50': {'10': 44080, '20': 70210, '30': 97640} },
+            'F': { '0': {'10': 13720, '20': 23910, '30': 34270}, '5': {'10': 15120, '20': 26210, '30': 37470}, '10': {'10': 16530, '20': 28510, '30': 40620}, '15': {'10': 18230, '20': 31160, '30': 44470}, '20': {'10': 19880, '20': 33800, '30': 48340}, '25': {'10': 22480, '20': 37100, '30': 52640}, '30': {'10': 25100, '20': 40400, '30': 56930}, '35': {'10': 27150, '20': 44050, '30': 62230}, '40': {'10': 29230, '20': 47700, '30': 67550}, '45': {'10': 32700, '20': 52290, '30': 74050}, '50': {'10': 37300, '20': 57960, '30': 82340} }
         }
+    };
+    
+    // 【更新核心】：定期險組合基準 (僅以 1HIR + 1HSCO A-I型 累計至 85歲 的保費概算)
+    // 演算法將依據選取的 WEHS 計畫 (10/20/30) 進行等比例保額放大：termBaseCumulative * (plan/10)
+    const termBaseCumulative = {
+        'M': { '0': 1000000, '5': 970000, '10': 940000, '15': 910000, '20': 880000, '25': 850000, '30': 810000, '35': 780000, '40': 750000, '45': 710000, '50': 660000, '55': 600000, '60': 530000, '65': 440000, '70': 330000 },
+        'F': { '0': 880000, '5': 860000, '10': 840000, '15': 820000, '20': 800000, '25': 780000, '30': 760000, '35': 740000, '40': 710000, '45': 670000, '50': 620000, '55': 560000, '60': 490000, '65': 400000, '70': 290000 }
     };
 
     const ben = {
@@ -283,7 +194,7 @@
         const ageSelect = document.getElementById('age');
         ageSelect.innerHTML = ''; 
         let maxAge = term === '10' ? 70 : (term === '20' ? 60 : 50);
-        
+
         for(let i = 0; i <= maxAge; i+=5) {
             let option = document.createElement('option');
             option.value = i;
@@ -291,6 +202,26 @@
             if (i === 40) option.selected = true; 
             ageSelect.appendChild(option);
         }
+    }
+
+    function checkUpgrade() {
+        const plan = document.getElementById('plan').value;
+        const upgradeBox = document.getElementById('upgradeAlert');
+        if((plan === '10' || plan === '20') && document.getElementById('resultBox').style.display === 'block') {
+            calculatePlan(); 
+        } else {
+            upgradeBox.style.display = 'none';
+        }
+    }
+
+    function executeUpgrade() {
+        const currentPlan = document.getElementById('plan').value;
+        if(currentPlan === '10'){
+            document.getElementById('plan').value = '20';
+        } else if(currentPlan === '20'){
+            document.getElementById('plan').value = '30';
+        }
+        calculatePlan();
     }
 
     function calculatePlan() {
@@ -303,6 +234,64 @@
         const totalPremium = annualPremium * parseInt(term);
         const deathBenefit = totalPremium * 1.06;
         const p = ben[plan];
+
+        // 進階試算模組 (一鍵切換，移至最下方)
+        if(plan === '10') {
+            const p20_premium = rates[term][gender][age]['20'];
+            const diff_premium = p20_premium - annualPremium;
+            const diff_ratio = Math.round((diff_premium / annualPremium) * 100);
+            
+            document.getElementById('upgradeAlert').innerHTML = `
+                <div class="upgrade-content" style="display:flex; justify-content: space-between; align-items: center; width: 100%;">
+                    <div>
+                        <h3>💡 進階試算：升級計畫 20 效益分析</h3>
+                        每年只需增加 <strong style="color:#d35400;">${(diff_premium/10000).toFixed(2)} 萬</strong> (約 +${diff_ratio}%)，<br>
+                        即可讓 74 歲後的實支實付總額度從 250 萬 <b style="color:#c0392b;">直接翻倍至 500 萬</b>！各項限額同步翻倍！
+                    </div>
+                    <button class="btn-upgrade" onclick="executeUpgrade()">🚀 一鍵升級試算</button>
+                </div>
+            `;
+            document.getElementById('upgradeAlert').style.display = 'block';
+        } else if(plan === '20') {
+            const p30_premium = rates[term][gender][age]['30'];
+            const diff_premium = p30_premium - annualPremium;
+            const diff_ratio = Math.round((diff_premium / annualPremium) * 100);
+            
+            document.getElementById('upgradeAlert').innerHTML = `
+                <div class="upgrade-content" style="display:flex; justify-content: space-between; align-items: center; width: 100%;">
+                    <div>
+                        <h3>💡 進階試算：升級計畫 30 效益分析</h3>
+                        每年只需增加 <strong style="color:#d35400;">${(diff_premium/10000).toFixed(2)} 萬</strong> (約 +${diff_ratio}%)，<br>
+                        即可讓 74 歲後的實支實付總額度從 500 萬 <b style="color:#c0392b;">直上頂規 750 萬</b>！從容應對最昂貴的重症醫療！
+                    </div>
+                    <button class="btn-upgrade" onclick="executeUpgrade()">🚀 一鍵升級試算</button>
+                </div>
+            `;
+            document.getElementById('upgradeAlert').style.display = 'block';
+        } else {
+            document.getElementById('upgradeAlert').style.display = 'none';
+        }
+
+        // 黃金交叉動態連動運算 (僅計算 1HIR + 1HSCO)
+        const termTotal = termBaseCumulative[gender][age] * (parseInt(plan) / 10);
+        const wehsWidth = Math.min((totalPremium / Math.max(totalPremium, termTotal)) * 100, 100);
+        const termWidth = Math.min((termTotal / Math.max(totalPremium, termTotal)) * 100, 100);
+
+        document.getElementById('crossAnalysis').innerHTML = `
+            <h3>📈 保費黃金交叉分析 (對決定期險迷思)</h3>
+            <p style="font-size:15px; color:#555; margin-bottom:10px;">許多人以為定期險較便宜，但若將<b>定期險保額(1HIR+1HSCO)動態調整為與 WEHS 計畫 ${plan} 同等基準</b>，計算至 85 歲，您會發現其保費呈指數型飆升：</p>
+            <div style="font-size:14px; margin-bottom:5px;"><strong>WEHS 計畫 ${plan} (${term}年總繳，保障終身)</strong></div>
+            <div class="bar-container">
+                <div class="bar-wehs" style="width: ${wehsWidth}%;">${Math.round(totalPremium/10000)} 萬元</div>
+            </div>
+            <div style="font-size:14px; margin-bottom:5px;"><strong>同保額之定期險組合 (繳至85歲預估總成本，保障中斷)</strong></div>
+            <div class="bar-container">
+                <div class="bar-term" style="width: ${termWidth}%;">${Math.round(termTotal/10000)} 萬元</div>
+            </div>
+            <div style="background:#fef9e7; padding:10px; border-radius:5px; margin-top:10px; font-size:14px; color:#d35400;">
+                🔥 <b>殘酷真相：</b>即使不計入 74 歲前的實支費用，同等保額的定期險總成本依然極高，且在最容易生病的 85 歲後保障歸零；WEHS 繳滿後不必再繳，持續提供最高 ${p.max} 的醫療金庫，未用盡更可保本傳承。
+            </div>
+        `;
 
         document.getElementById('summaryContent').innerHTML = `
             <div>
@@ -318,7 +307,6 @@
         `;
 
         document.getElementById('comparisonContent').innerHTML = `
-            <!-- 左側：74歲前 定額給付 -->
             <div class="comparison-col">
                 <div class="col-header header-pre">保險年齡達 74 歲(不含)前<br><span style="font-size:14px;">【定額給付】最高上限 ${p.max}</span></div>
                 <ul class="benefit-list">
@@ -331,8 +319,6 @@
                     <li><span class="b-title">特殊醫材補助保險金 / 次<br><small style="color:#7f8c8d; font-weight:normal;">(限5項特定醫材，上限10次)</small></span><span class="b-amount">${p.d_device}</span></li>
                 </ul>
             </div>
-
-            <!-- 右側：74歲後 實支實付 -->
             <div class="comparison-col">
                 <div class="col-header header-post">保險年齡達 74 歲(含)起<br><span style="font-size:14px;">【實支實付】最高限額 ${p.max}</span></div>
                 <ul class="benefit-list">
@@ -360,7 +346,10 @@
         document.getElementById('resultBox').style.display = 'block';
     }
 
-    window.onload = updateAgeOptions;
+    // 初始化下拉選單並預設載入 40 歲
+    window.onload = function() {
+        updateAgeOptions();
+    };
 </script>
 
 </body>
