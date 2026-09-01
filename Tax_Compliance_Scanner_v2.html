@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>實質課稅與 AMT 雙軌檢測儀</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; color: #333; padding: 15px; line-height: 1.6; margin: 0; }
+        .container { max-width: 1000px; margin: auto; background: #fff; padding: 25px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        h1 { color: #2c3e50; text-align: center; border-bottom: 2px solid #34495e; padding-bottom: 10px; margin-bottom: 25px; font-size: 26px; font-weight: bold;}
+        
+        .tab-container { display: flex; justify-content: center; gap: 15px; margin-bottom: 30px; }
+        .tab-btn { flex: 1; max-width: 300px; padding: 15px; text-align: center; font-size: 18px; font-weight: bold; border-radius: 8px; cursor: pointer; transition: 0.3s; border: 2px solid #bdc3c7; background: #fdfefe; color: #7f8c8d; }
+        .tab-btn.active { background: #34495e; color: #fff; border-color: #34495e; box-shadow: 0 4px 10px rgba(52,73,94,0.3); }
+        
+        .mode-section { display: none; animation: fadeIn 0.5s; }
+        .mode-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .checkbox-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 25px; }
+        .check-item { display: flex; align-items: center; background: #f8f9f9; padding: 15px; border-radius: 8px; border: 1px solid #e5e8e8; cursor: pointer; transition: 0.2s;}
+        .check-item:hover { background: #eaf2f8; border-color: #3498db; }
+        .check-item input[type="checkbox"] { transform: scale(1.5); margin-right: 15px; cursor: pointer; }
+        .check-item label { font-size: 16px; font-weight: bold; color: #2c3e50; cursor: pointer; flex-grow: 1; margin: 0;}
+        
+        .form-row { display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }
+        .form-group { flex: 1; min-width: 30%; background: #fdfefe; padding: 15px; border-radius: 8px; border: 1px solid #e5e8e8;}
+        .form-group label { display: block; margin-bottom: 8px; color: #5a6a77; font-size: 16px; font-weight: bold;}
+        .form-group input { width: 100%; padding: 12px; border: 1px solid #bdc3c7; border-radius: 6px; font-size: 18px; color: #2c3e50; box-sizing: border-box;}
+
+        /* CFC 專屬隱藏區塊 */
+        .pro-toggle { margin-bottom: 20px; padding: 15px; background: #ebf5fb; border-radius: 8px; border: 1px dashed #3498db; display: flex; align-items: center; cursor: pointer; }
+        .pro-toggle input { transform: scale(1.5); margin-right: 15px; cursor: pointer;}
+        .pro-toggle label { font-size: 16px; font-weight: bold; color: #2980b9; cursor: pointer; margin: 0;}
+        .cfc-group { display: none; background: #fdf2e9; border: 1px solid #f5b041; animation: fadeIn 0.4s;}
+        .cfc-group label { color: #d35400; }
+
+        button.action-btn { background-color: #e67e22; color: #fff; padding: 16px; border: none; border-radius: 8px; cursor: pointer; font-size: 20px; width: 100%; font-weight: bold; margin-top: 10px; transition: 0.3s; letter-spacing: 1px;}
+        button.action-btn:hover { background-color: #d35400; }
+
+        .result-box { margin-top: 30px; display: none; background: #fff; border: 2px solid #cbd5e1; border-radius: 10px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .result-title { font-size: 22px; margin-top: 0; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+        .status-light { width: 20px; height: 20px; border-radius: 50%; display: inline-block; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2); }
+        
+        .bg-green { background-color: #eafaf1; border-color: #2ecc71; }
+        .bg-yellow { background-color: #fef9e7; border-color: #f1c40f; }
+        .bg-red { background-color: #fdedec; border-color: #e74c3c; }
+        
+        .light-green { background-color: #2ecc71; }
+        .light-yellow { background-color: #f1c40f; }
+        .light-red { background-color: #e74c3c; animation: blink 1.5s infinite; }
+        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+
+        .result-data { font-size: 18px; color: #34495e; line-height: 1.8; margin-bottom: 15px;}
+        .highlight-num { font-weight: 900; font-size: 22px; color: #c0392b; }
+        .highlight-safe { font-weight: 900; font-size: 22px; color: #27ae60; }
+
+        .advisor-note { background: #f8f9f9; border-left: 6px solid #3498db; padding: 20px; border-radius: 0 8px 8px 0; margin-top: 20px; }
+        .advisor-note h4 { margin-top: 0; color: #2980b9; font-size: 18px; margin-bottom: 10px;}
+        .advisor-note p { margin: 0; font-size: 16px; color: #5a6a77; line-height: 1.6;}
+
+        @media screen and (max-width: 768px) { 
+            .form-group { min-width: 100%; }
+            .tab-container { flex-direction: column; }
+            .tab-btn { max-width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🚨 IFA 實質課稅與 AMT 雙軌檢測儀</h1>
+
+    <div class="tab-container">
+        <div class="tab-btn active" id="btn-mode1" onclick="switchMode(1)">🛡️ 模式一：舊保單風險拆彈</div>
+        <div class="tab-btn" id="btn-mode2" onclick="switchMode(2)">🎯 模式二：新資金合規配置</div>
+    </div>
+
+    <!-- 模式一：舊保單風險拆彈 -->
+    <div id="mode1" class="mode-section active">
+        <p style="font-size: 16px; color: #7f8c8d; margin-bottom: 20px; text-align: center;">請依據客戶現有之大額保單狀況，勾選符合之特徵（符合越多，遭國稅局剔除免稅資格之機率越高）：</p>
+        
+        <div class="checkbox-grid">
+            <div class="check-item" onclick="toggleCheckbox('chk1')">
+                <input type="checkbox" id="chk1" class="risk-chk"><label>高齡投保 (通常大於 65 歲)</label>
+            </div>
+            <div class="check-item" onclick="toggleCheckbox('chk2')">
+                <input type="checkbox" id="chk2" class="risk-chk"><label>重病投保 (帶病或短期內身故)</label>
+            </div>
+            <div class="check-item" onclick="toggleCheckbox('chk3')">
+                <input type="checkbox" id="chk3" class="risk-chk"><label>躉繳保費 (一次繳清鉅額保費)</label>
+            </div>
+            <div class="check-item" onclick="toggleCheckbox('chk4')">
+                <input type="checkbox" id="chk4" class="risk-chk"><label>密集投保 (短期內買多張保單)</label>
+            </div>
+            <div class="check-item" onclick="toggleCheckbox('chk5')">
+                <input type="checkbox" id="chk5" class="risk-chk"><label>舉債投保 (向銀行貸款買保單)</label>
+            </div>
+            <div class="check-item" onclick="toggleCheckbox('chk6')">
+                <input type="checkbox" id="chk6" class="risk-chk"><label>鉅額投保 (保費與身家不成比例)</label>
+            </div>
+            <div class="check-item" onclick="toggleCheckbox('chk7')">
+                <input type="checkbox" id="chk7" class="risk-chk"><label>短期投保 (投保後旋即發生事故)</label>
+            </div>
+            <div class="check-item" onclick="toggleCheckbox('chk8')">
+                <input type="checkbox" id="chk8" class="risk-chk"><label>保費與保額相當 (無保險槓桿)</label>
+            </div>
+        </div>
+        <button class="action-btn" onclick="scanMode1()">啟動實質課稅 X 光掃描</button>
+        
+        <div id="result-mode1" class="result-box"></div>
+    </div>
+
+    <!-- 模式二：新資金合規配置 -->
+    <div id="mode2" class="mode-section">
+        <p style="font-size: 16px; color: #7f8c8d; margin-bottom: 20px; text-align: center;">精算新購入保單是否會撐破 AMT 免稅額度 (死亡給付免稅額 3,740萬 / 基本免稅額 750萬)：</p>
+        
+        <!-- IFA 企業主專屬開關 (漸進式揭露) -->
+        <div class="pro-toggle" onclick="toggleCFC()">
+            <input type="checkbox" id="chk-cfc">
+            <label>⚙️ 進階選項：客戶持有境外公司 (啟動 CFC 盈餘穿透試算)</label>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>預估年度個人海外所得</label>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <input type="number" id="amt-overseas" value="0" min="0"> 萬元
+                </div>
+            </div>
+            <div class="form-group cfc-group" id="cfc-input-box">
+                <label>⚠️ CFC 當年度核定盈餘 (穿透認列)</label>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <input type="number" id="amt-cfc" value="0" min="0"> 萬元
+                </div>
+            </div>
+            <div class="form-group">
+                <label>既有保單身故理賠總額 (估值)</label>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <input type="number" id="amt-existing" value="0" min="0"> 萬元
+                </div>
+            </div>
+            <div class="form-group">
+                <label>本次預計新增之保額 (台幣等值)</label>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <input type="number" id="amt-new" value="3000" min="0"> 萬元
+                </div>
+            </div>
+        </div>
+        <button class="action-btn" onclick="scanMode2()">試算 AMT 潛在稅負缺口</button>
+        
+        <div id="result-mode2" class="result-box"></div>
+    </div>
+
+</div>
+
+<script>
+    function switchMode(mode) {
+        document.getElementById('btn-mode1').classList.remove('active');
+        document.getElementById('btn-mode2').classList.remove('active');
+        document.getElementById('mode1').classList.remove('active');
+        document.getElementById('mode2').classList.remove('active');
+        
+        document.getElementById('result-mode1').style.display = 'none';
+        document.getElementById('result-mode2').style.display = 'none';
+
+        document.getElementById('btn-mode' + mode).classList.add('active');
+        document.getElementById('mode' + mode).classList.add('active');
+    }
+
+    function toggleCheckbox(id) {
+        const chk = document.getElementById(id);
+        chk.checked = !chk.checked;
+    }
+
+    // 控制 CFC 欄位的顯示與隱藏
+    function toggleCFC() {
+        const chk = document.getElementById('chk-cfc');
+        chk.checked = !chk.checked;
+        const cfcBox = document.getElementById('cfc-input-box');
+        if (chk.checked) {
+            cfcBox.style.display = 'block';
+        } else {
+            cfcBox.style.display = 'none';
+            document.getElementById('amt-cfc').value = '0'; // 關閉時歸零
+        }
+    }
+
+    function scanMode1() {
+        const checkboxes = document.querySelectorAll('.risk-chk');
+        let riskCount = 0;
+        checkboxes.forEach(chk => { if(chk.checked) riskCount++; });
+
+        const resultBox = document.getElementById('result-mode1');
+        let lightClass, bgClass, titleText, descText, advisorText;
+
+        if (riskCount >= 3) {
+            lightClass = 'light-red'; bgClass = 'bg-red';
+            titleText = '高風險地雷區！極易遭國稅局實質穿透';
+            descText = `您勾選了 <span class="highlight-num">${riskCount}</span> 項國稅局列管特徵。這類保單在繼承時，極大概率會被國稅局依「實質課稅原則」剔除免稅資格，並<b>全數併入遺產總額課稅</b>。`;
+            advisorText = `建議立即啟動「保單重整」。可評估辦理減額繳清或變更要保人。新的傳承資金應轉向具備真實保險槓桿（如：期繳）的終身險商品。`;
+        } else if (riskCount > 0) {
+            lightClass = 'light-yellow'; bgClass = 'bg-yellow';
+            titleText = '中度稅務風險，需密切留意查稅動態';
+            descText = `您勾選了 <span class="highlight-num">${riskCount}</span> 項特徵。雖不一定立刻開罰，但已具備避稅外觀。`;
+            advisorText = `後續規劃務必避開躉繳與高齡投保。建議導入「分期定額繳費」的美元終身壽險，拉長資金閉帳期，還原保險保障本質。`;
+        } else {
+            lightClass = 'light-green'; bgClass = 'bg-green';
+            titleText = '保單體質健康，符合法規免稅精神';
+            descText = `目前未檢測出明顯的地雷特徵。只要確保「要保人與被保險人」為同一人，理賠金即可安全免計入遺產總額。`;
+            advisorText = `基礎架構非常健康！接下來我們只需透過「模式二」，為您精算理賠金是否會踩到 AMT 的 3,740 萬天花板。`;
+        }
+
+        resultBox.className = `result-box ${bgClass}`;
+        resultBox.innerHTML = `
+            <h3 class="result-title"><span class="status-light ${lightClass}"></span> ${titleText}</h3>
+            <div class="result-data">${descText}</div>
+            <div class="advisor-note">
+                <h4>💡 IFA 架構師建議</h4>
+                <p>${advisorText}</p>
+            </div>
+        `;
+        resultBox.style.display = 'block';
+    }
+
+    function scanMode2() {
+        const overseas = parseFloat(document.getElementById('amt-overseas').value) || 0;
+        const cfc = parseFloat(document.getElementById('amt-cfc').value) || 0;
+        const existing = parseFloat(document.getElementById('amt-existing').value) || 0;
+        const newFace = parseFloat(document.getElementById('amt-new').value) || 0;
+
+        const DEATH_BENEFIT_EXEMPTION = 3740; 
+        const AMT_EXEMPTION = 750; 
+
+        const totalDeathBenefit = existing + newFace;
+        const taxableInsurance = Math.max(0, totalDeathBenefit - DEATH_BENEFIT_EXEMPTION);
+        
+        // 總海外所得 = 個人海外 + CFC 強制穿透認列
+        const totalOverseas = overseas + cfc;
+        const basicIncome = totalOverseas + taxableInsurance;
+        
+        const amtTaxable = Math.max(0, basicIncome - AMT_EXEMPTION);
+        const estimatedTax = amtTaxable * 0.2; 
+
+        const resultBox = document.getElementById('result-mode2');
+        let lightClass, bgClass, titleText, advisorText;
+
+        if (estimatedTax > 0) {
+            lightClass = 'light-red'; bgClass = 'bg-red';
+            titleText = '⚠️ 突破 AMT 免稅天花板，引發實質稅負';
+            advisorText = `您的總理賠金加上海外所得已產生 <strong>${estimatedTax.toLocaleString()} 萬元</strong> 的潛在 AMT 稅負。<br>建議策略：<br>1. 考慮將部分保單的要/被保險人更改為「配偶」，以分散申報戶。<br>2. 調整保單受益人比例，利用「多人受益」稀釋單一申報戶額度。`;
+            if (cfc > 0) {
+                advisorText += `<br>3. <span style="color:#d35400; font-weight:bold;">您已受 CFC 法案影響。</span> 建議在 OBU 分配盈餘的年度，透過境內大額保單的「保單借款」功能調度資金繳稅，避免動用境外資金引發二次課稅。`;
+            }
+        } else {
+            lightClass = 'light-green'; bgClass = 'bg-green';
+            titleText = '✅ 完美控管於 AMT 免稅額度內';
+            advisorText = `這是一組非常漂亮的新保單配置額度！不僅補足了傳承缺口，也沒有引發任何額外的最低稅負。<br>請放心簽署這份規劃，我們已經為您鎖定了最安全的免稅水位。`;
+        }
+
+        resultBox.className = `result-box ${bgClass}`;
+        resultBox.innerHTML = `
+            <h3 class="result-title"><span class="status-light ${lightClass}"></span> ${titleText}</h3>
+            <table style="width:100%; border-collapse: collapse; margin-bottom: 15px; font-size: 16px;">
+                <tr style="border-bottom: 1px solid #cbd5e1;">
+                    <td style="padding: 10px 0; color:#5a6a77;">總身故理賠金額：</td>
+                    <td style="padding: 10px 0; text-align:right; font-weight:bold; color:#2c3e50;">${totalDeathBenefit.toLocaleString()} 萬</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #cbd5e1;">
+                    <td style="padding: 10px 0; color:#5a6a77;">應計入基本所得之保險金 <span style="font-size:12px;">(扣除 3,740 萬免稅)</span>：</td>
+                    <td style="padding: 10px 0; text-align:right; font-weight:bold; color:#d35400;">${taxableInsurance.toLocaleString()} 萬</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #cbd5e1;">
+                    <td style="padding: 10px 0; color:#5a6a77;">估算基本所得總額 <span style="font-size:12px;">(加計海外與 CFC)</span>：</td>
+                    <td style="padding: 10px 0; text-align:right; font-weight:bold; color:#d35400;">${basicIncome.toLocaleString()} 萬</td>
+                </tr>
+                <tr>
+                    <td style="padding: 15px 0; color:#2c3e50; font-weight:bold; font-size:18px;">預估 AMT 潛在稅負 <span style="font-size:13px;">(扣除 750 萬後乘 20%)</span>：</td>
+                    <td style="padding: 15px 0; text-align:right; font-size:22px;" class="${estimatedTax > 0 ? 'highlight-num' : 'highlight-safe'}">${estimatedTax > 0 ? estimatedTax.toLocaleString() + ' 萬' : '免稅 0 元'}</td>
+                </tr>
+            </table>
+            <div class="advisor-note">
+                <h4>💡 IFA 架構師建議</h4>
+                <p>${advisorText}</p>
+            </div>
+        `;
+        resultBox.style.display = 'block';
+    }
+</script>
+</body>
+</html>
