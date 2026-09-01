@@ -13,7 +13,6 @@
         .form-group { flex: 1; min-width: 25%; }
         label { display: block; font-weight: bold; margin-bottom: 8px; color: #2c3e50; font-size: 16px;}
         
-        /* 防 iOS 縮放，強制 select, input 至少 16px */
         select.main-select, input { width: 100%; padding: 14px; border: 1px solid #bdc3c7; border-radius: 8px; font-size: 18px; background-color: #fdfefe; box-sizing: border-box;}
         button { background-color: #2980b9; color: #fff; padding: 16px; border: none; border-radius: 8px; cursor: pointer; font-size: 20px; width: 100%; font-weight: bold; margin-top: 10px; transition: 0.3s;}
         button:hover { background-color: #2471a3; }
@@ -31,10 +30,8 @@
         
         .card-body { padding: 0; list-style: none; margin: 0; flex-grow: 1;}
         .card-body li { padding: 15px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;}
-        /* 移除最後一行的加粗設定 */
         .card-body li:last-child { border-bottom: none; background-color: #fef9e7; flex-direction: column; align-items: flex-end; padding: 18px 15px; font-weight: normal;}
         
-        /* 舒適閱覽體驗：全面去除粗體，調整為 16px 基準 */
         .li-title { color: #5a6a77; font-size: 16px; font-weight: normal;}
         .li-val { color: #2c3e50; font-size: 16px; font-weight: normal; text-align: right;}
         .li-val.usd-currency { color: #2980b9; font-size: 16px; font-weight: normal;}
@@ -80,23 +77,25 @@
     </div>
 
     <div class="form-row">
+        <!-- 移除了 onchange="calculatePlan()"，由按鈕統一控制展示節奏 -->
         <div class="form-group">
             <label>被保險人年齡 (15-75歲)：</label>
-            <input type="number" id="age" class="main-select" value="40" min="15" max="75" onchange="calculatePlan()">
+            <input type="number" id="age" class="main-select" value="40" min="15" max="75">
         </div>
         <div class="form-group">
             <label>被保險人性別：</label>
-            <select id="gender" class="main-select" onchange="calculatePlan()">
+            <select id="gender" class="main-select">
                 <option value="M">男性</option>
                 <option value="F">女性</option>
             </select>
         </div>
         <div class="form-group">
             <label>目標壽險保額 (萬元/台幣)：</label>
-            <input type="number" id="targetFace" value="1000" min="100" step="100" onchange="calculatePlan()">
+            <input type="number" id="targetFace" value="1000" min="100" step="100">
         </div>
     </div>
 
+    <!-- 唯一觸發展示的按鈕 -->
     <button onclick="calculatePlan()">產出跨險種稅源預留對比</button>
 
     <div id="resultBox" class="result-box">
@@ -125,6 +124,7 @@
                 <ul class="card-body">
                     <li><span class="li-title">計價幣別</span><span class="li-val">台幣 (TWD)</span></li>
                     <li><span class="li-title">繳費年期</span>
+                        <!-- 保留此處的即時互動性 -->
                         <select class="inline-select" id="term-awtpl" onchange="calculatePlan()">
                             <option value="6" selected>6 年期</option>
                             <option value="10">10 年期</option>
@@ -182,7 +182,7 @@
                     </li>
                     <li><span class="li-title">保障年齡</span><span class="li-val">終身 (至 99 歲)</span></li>
                     <li><span class="li-title">體況要求</span><span class="li-val" style="color:#e67e22;">有體況可評估</span></li>
-                    <li><span class="li-title">商品備註</span><span class="li-val" style="color:#e67e22;">第4保單年末達足額</span></li>
+                    <li><span class="li-title">商品備註</span><span class="li-val" style="color:#e67e22; font-size:14px;">第4保單年末達足額</span></li>
                     <li><span class="li-title">保額(萬/USD)</span><span class="li-val" id="face-usd-ayupl3" style="color:#2980b9;"></span></li>
                     <li><span class="li-title">保費(原幣)</span><span class="li-val" id="prem-org-ayupl3"></span></li>
                     <li><span class="li-title">折合台幣年繳</span><span class="li-val highlight-prem" id="prem-twd-ayupl3"></span></li>
@@ -200,7 +200,7 @@
             <ul>
                 <li><strong>免除特留分爭議：</strong> 依據《保險法》第 112 條約定，有指定受益人之死亡給付，不得作為被保險人之遺產。這能徹底阻斷《民法》特留分干擾，確保財富精準交接。</li>
                 <li><strong>瞬間放大的流動性稅源：</strong> 不動產變現耗時，繼承人常面臨「無現金繳遺產稅」的困境。壽險理賠金能在事故發生後迅速核發，直接化為繳付稅金的流動性子彈。</li>
-                <li><strong>總成本的終極對決：</strong> 定期險 (N1TR) 年輕時便宜，但若要維持保障至 74 歲，其累積的自然費率將極度驚人。將資金轉入終身型險種，不僅鎖定總繳成本，更具備資產保值與傳承的雙效功能。</li>
+                <li><strong>總成本的終極對決：</strong> 定期險 (N1TR) 年輕時便宜，但若要維持保障至 74 歲，其累積的自然費率將極度驚人。將資金轉入終身型險種 (AWTPL / AYWUPL / AYUPL3)，不僅鎖定總繳成本，更具備資產保值與傳承的雙效功能。</li>
             </ul>
         </div>
         
@@ -347,15 +347,13 @@
         document.getElementById('prem-twd-ayupl3').innerText = formatTenK(premAYUPL3_TWD);
         document.getElementById('total-ayupl3').innerText = formatTenK(totalAYUPL3_TWD);
 
+        // 按下按鈕後才顯示結果區域
         document.getElementById('resultBox').style.display = 'block';
     }
 
     window.onload = function() {
-        initExchangeRate().then(() => {
-            if(document.getElementById('resultBox').style.display === 'block'){
-                calculatePlan();
-            }
-        });
+        initExchangeRate();
+        // 移除了初始頁面載入時自動執行的 calculatePlan() 判斷，確保畫面純淨
     };
 </script>
 </body>
