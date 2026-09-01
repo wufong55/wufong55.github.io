@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IFA 資產傳承與稅務精算系統 | 專業顧問版</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; color: #333; line-height: 1.6; margin: 0; padding: 20px; }
+        .container { max-width: 800px; margin: auto; background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 8px 16px rgba(0,0,0,0.1); }
+        
+        h1 { color: #2c3e50; text-align: center; margin-bottom: 5px; border-bottom: 2px solid #3498db; padding-bottom: 15px; }
+        .subtitle { text-align: center; color: #7f8c8d; margin-bottom: 30px; font-weight: bold; }
+        
+        .section-title { font-size: 18px; color: #2980b9; margin-top: 25px; margin-bottom: 15px; border-left: 4px solid #3498db; padding-left: 10px; }
+        
+        .form-group { margin-bottom: 20px; }
+        label { display: block; font-weight: bold; margin-bottom: 8px; color: #2c3e50; }
+        .hint { display: block; color: #7f8c8d; font-size: 13px; font-weight: normal; margin-bottom: 5px; }
+        input[type="number"], select { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; box-sizing: border-box; font-size: 16px; transition: border-color 0.3s; }
+        input[type="number"]:focus, select:focus { outline: none; border-color: #3498db; box-shadow: 0 0 0 3px rgba(52,152,219,0.2); }
+        
+        button.calc-btn { background-color: #2c3e50; color: #fff; padding: 15px; border: none; border-radius: 8px; cursor: pointer; font-size: 18px; width: 100%; font-weight: bold; transition: background-color 0.3s; margin-top: 20px; }
+        button.calc-btn:hover { background-color: #34495e; }
+        
+        .result-box { margin-top: 30px; padding: 25px; border-radius: 8px; background-color: #eef2f7; border: 2px solid #3498db; display: none; }
+        
+        .highlight { font-size: 24px; font-weight: bold; color: #e74c3c; }
+        .safe { color: #27ae60; font-weight: bold; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; background: #fff; }
+        th, td { padding: 12px; border: 1px solid #e2e8f0; text-align: left; }
+        th { background-color: #f1f5f9; color: #475569; }
+        
+        .strategy-card { background: #fff; padding: 20px; border-radius: 8px; border-left: 5px solid #9b59b6; margin-top: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .strategy-card.blue { border-left-color: #3498db; }
+        
+        .disclaimer { margin-top: 30px; font-size: 12px; color: #95a5a6; border-top: 1px solid #eee; padding-top: 15px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🏛️ IFA 資產傳承與稅務精算系統</h1>
+    <p class="subtitle">結合配偶請求權與流動性分析，制定專屬財富保全架構</p>
+
+    <!-- 基礎參數 -->
+    <div class="section-title">Step 1: 家族結構與資產現況</div>
+    <div class="form-group">
+        <label>被繼承人預估總資產 (新台幣/萬元)：</label>
+        <input type="number" id="totalAssets" placeholder="例如：12000">
+    </div>
+
+    <div class="form-group">
+        <label>配偶狀況：</label>
+        <select id="spouseStatus">
+            <option value="yes">配偶健在 (可計入 553 萬扣除額)</option>
+            <option value="no">無配偶 / 已歿 (無法計入)</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>成年直系血親卑親屬 (子女) 人數：</label>
+        <span class="hint">每人可扣除 56 萬元</span>
+        <input type="number" id="childrenCount" value="2" min="0">
+    </div>
+
+    <!-- 顧問進階參數 -->
+    <div class="section-title">Step 2: IFA 顧問進階精算參數</div>
+    <div class="form-group">
+        <label>總資產中，不動產與未上市櫃股權佔比 (%)：</label>
+        <span class="hint">用於評估未來繳稅時的「現金流動性缺口」</span>
+        <input type="number" id="illiquidRatio" value="70" min="0" max="100">
+    </div>
+    
+    <div class="form-group">
+        <label>預估夫妻「婚後」財產差額 (夫大於妻之金額，萬元)：</label>
+        <span class="hint">用於啟動《民法》第 1030-1 條「剩餘財產差額分配請求權」試算。若無法判定可填 0。</span>
+        <input type="number" id="propertyDiff" value="0" min="0">
+    </div>
+
+    <button class="calc-btn" onclick="calculate()">📊 產出專業分析報告</button>
+
+    <!-- 結果顯示區 -->
+    <div id="resultArea" class="result-box"></div>
+    
+    <div class="disclaimer">
+        ⚠️ 顧問免責聲明：本系統依據現行台灣《遺產及贈與稅法》之常態免稅額與扣除額進行粗估，未包含被繼承人死亡前兩年贈與之擬制遺產、海外 CFC 收益及農業用地等特殊扣除額。實際應納稅額須以國稅局最終核定為準。請搭配完整保單健檢與信託規劃進行綜合評估。
+    </div>
+</div>
+
+<script>
+    function calculate() {
+        // 取得輸入值
+        const assets = Number(document.getElementById('totalAssets').value) || 0;
+        const hasSpouse = document.getElementById('spouseStatus').value === 'yes';
+        const children = Number(document.getElementById('childrenCount').value) || 0;
+        const illiquidRatio = Number(document.getElementById('illiquidRatio').value) / 100 || 0;
+        const diff = Number(document.getElementById('propertyDiff').value) || 0;
+        
+        // 法定免稅與扣除額 (現行標準)
+        const base = 1333; // 基本免稅額
+        const funeral = 138; // 喪葬費定額扣除
+        const spouseDeduct = hasSpouse ? 553 : 0; // 配偶扣除額
+        const childDeduct = children * 56; // 子女扣除額
+        const totalExempt = base + funeral + spouseDeduct + childDeduct;
+        
+        // 初階應稅計算
+        let taxable = assets - totalExempt;
+        if (taxable < 0) taxable = 0;
+
+        // 進階：配偶請求權扣除
+        const claimAmount = hasSpouse ? diff / 2 : 0; 
+        let finalTaxable = taxable - claimAmount;
+        if (finalTaxable < 0) finalTaxable = 0;
+
+        // 稅率級距精算 (10%, 15%, 20%)
+        let taxAmount = 0;
+        let taxRateStr = "0%";
+        if (finalTaxable > 0 && finalTaxable <= 5000) {
+            taxAmount = finalTaxable * 0.1;
+            taxRateStr = "10%";
+        } else if (finalTaxable > 5000 && finalTaxable <= 10000) {
+            taxAmount = (finalTaxable * 0.15) - 250;
+            taxRateStr = "15% (累進)";
+        } else if (finalTaxable > 10000) {
+            taxAmount = (finalTaxable * 0.2) - 750;
+            taxRateStr = "20% (累進)";
+        }
+
+        // 流動性缺口估算
+        const illiquidValue = assets * illiquidRatio;
+        const requiredCash = taxAmount + claimAmount; // 繳稅現金 + 交付配偶現金
+        
+        // 產出 HTML 報告
+        const resultArea = document.getElementById('resultArea');
+        resultArea.style.display = 'block';
+        
+        let html = `<h2 style="margin-top:0; color:#2c3e50; border-bottom:1px solid #bdc3c7; padding-bottom:10px;">📋 稅基精算與架構評估</h2>`;
+        
+        html += `
+        <table>
+            <tr><th width="60%">評估項目</th><th>金額 (萬元)</th></tr>
+            <tr><td>被繼承人總資產</td><td>${assets.toLocaleString()}</td></tr>
+            <tr><td>總免稅扣除額 (免稅額+喪葬+配偶+子女)</td><td>- ${totalExempt.toLocaleString()}</td></tr>
+            <tr style="background-color:#fef9e7;"><td><strong>初步應稅遺產淨額 (未做任何規劃)</strong></td><td><strong>${taxable.toLocaleString()}</strong></td></tr>
+        </table>`;
+
+        if (taxable === 0) {
+            html += `<p style="margin-top:20px; font-size:18px;">✅ 結論：目前的資產水位完全在 <span class="safe">免稅防護網內</span>。</p>`;
+        } else {
+            html += `
+            <div class="strategy-card">
+                <h3 style="margin-top:0; color:#8e44ad;">🛡️ 策略一：緊急擋水壩 (配偶請求權)</h3>
+                <p>啟動民法配偶剩餘財產差額分配請求權，可自遺產中合法扣除 <strong>${claimAmount.toLocaleString()} 萬元</strong>，將資產平轉給配偶。</p>
+                <ul style="color:#555;">
+                    <li>優化後課稅淨額：<strong>${finalTaxable.toLocaleString()} 萬元</strong></li>
+                    <li>適用稅率級距：<strong>${taxRateStr}</strong></li>
+                    <li>預估應納遺產稅額：<strong class="highlight">${Math.round(taxAmount).toLocaleString()} 萬元</strong></li>
+                </ul>
+                <p style="font-size:13px; color:#e67e22; margin-bottom:0;">⚠️ <strong>IFA 提醒 (Cons)：</strong> 這僅是「遞延課稅」。資產移轉至配偶名下後，未來配偶身故將面臨二次繼承風險，且屆時將失去配偶扣除額與配偶請求權的保護。</p>
+            </div>
+            
+            <div class="strategy-card blue">
+                <h3 style="margin-top:0; color:#2980b9;">💧 策略二：自動抽水機 (流動性與稅源預留)</h3>
+                <p>檢視名下資產，缺乏流動性的不動產與股權高達 <strong>${Math.round(illiquidValue).toLocaleString()} 萬元</strong>。</p>
+                <p>若啟動策略一，家屬在 1 年內必須籌措出 <strong>${Math.round(requiredCash).toLocaleString()} 萬元</strong> 的現金（含遺產稅款及實質交付給配偶的差額），否則面臨罰鍰或資產賤賣。</p>
+                <div style="background-color:#ebf5fb; padding:15px; border-radius:5px; margin-top:15px;">
+                    <strong style="color:#2c3e50;">💡 顧問行動方案：</strong><br>
+                    建議立即建構保額至少 <strong>${Math.round(taxAmount).toLocaleString()} 萬 ~ ${Math.round(requiredCash).toLocaleString()} 萬</strong> 的【大額指定受益人壽險】。利用身故理賠的免稅活水，直接解決家屬的現金流危機，並透過「保單架構設計」將資產順利跳代傳承，完美斬斷二次繼承的稅負輪迴。
+                </div>
+            </div>`;
+        }
+
+        resultArea.innerHTML = html;
+        resultArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+</script>
+
+</body>
+</html>
