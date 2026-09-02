@@ -243,7 +243,7 @@
                 r_room_gen: '3,000', r_room_icu: '6,000', r_misc_gen: '30萬', r_misc_icu: '60萬', r_misc_cancer: '39萬', r_opd: '500', r_surg_gen: '6萬', r_surg_cancer: '7.8萬'}
     };
 
-    // 動態更新投保年齡 (逐歲載入)
+    // 動態更新投保年齡 (逐歲載入)，並預設為40歲
     function updateAgeOptions() {
         const term = document.getElementById('term').value;
         const ageSelect = document.getElementById('age');
@@ -351,7 +351,7 @@
 
         document.getElementById('summaryContent').innerHTML = `
             <div>
-                首期年繳保費：<strong style="font-size:20px;">${(annualPremium/10000).toFixed(2)} 萬元</strong><br>
+                首期年繳保費：<strong style="font-size:20px; color:#c0392b;">${annualPremium.toLocaleString()} 元</strong><br>
                 ${term} 年期總預算：<strong style="font-size:24px;">${(totalPremium/10000).toFixed(2)} 萬元</strong> <br>
                 無損傳承金底線：<span class="highlight">${Math.round(deathBenefit).toLocaleString()} 元</span> <br>
                 <span style="font-size:15px; color:#555;">(註：總繳保費 × 1.06，傳承時需扣除已領醫療金)</span>
