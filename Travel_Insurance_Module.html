@@ -3,167 +3,343 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>IFA 旅平險動態報價系統</title>
+    <title>IFA 旅平險雙引擎報價系統</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; color: #333; padding: 20px; line-height: 1.6; margin: 0; }
         .container { max-width: 950px; margin: auto; background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
-        h1 { color: #2c3e50; text-align: center; border-bottom: 2px solid #3498db; padding-bottom: 10px; margin-bottom: 25px; font-size: 26px; font-weight: bold;}
+        h1 { color: #2c3e50; text-align: center; border-bottom: 2px solid #3498db; padding-bottom: 10px; margin-bottom: 15px; font-size: 26px; font-weight: bold;}
+        .status-bar { text-align: center; font-size: 14px; font-weight: bold; margin-bottom: 20px; padding: 8px; border-radius: 6px; }
+        
+        /* 雙頁籤 UI 設計 */
+        .tab-container { display: flex; margin-bottom: 25px; border-bottom: 2px solid #bdc3c7; }
+        .tab-btn { flex: 1; padding: 15px; text-align: center; font-size: 18px; font-weight: bold; cursor: pointer; color: #7f8c8d; background: #fdfefe; border: none; outline: none; transition: 0.3s; border-radius: 8px 8px 0 0; }
+        .tab-btn:hover { background: #ebf5fb; color: #2980b9; }
+        .tab-btn.active { background: #3498db; color: #fff; border-bottom: 2px solid #2980b9; }
+
         .form-row { display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }
-        .form-group { flex: 1; min-width: 30%; background: #fdfefe; padding: 15px; border-radius: 8px; border: 1px solid #e5e8e8;}
+        .form-group { flex: 1; min-width: 30%; background: #fdfefe; padding: 15px; border-radius: 8px; border: 1px solid #e5e8e8; transition: 0.3s;}
         .form-group label { display: block; font-weight: bold; margin-bottom: 8px; color: #2c3e50; font-size: 15px;}
         select, input { width: 100%; padding: 10px; border: 1px solid #bdc3c7; border-radius: 6px; font-size: 16px; background-color: #fff; box-sizing: border-box;}
-        button.action-btn { background-color: #3498db; color: #fff; padding: 15px; border: none; border-radius: 8px; cursor: pointer; font-size: 18px; width: 100%; font-weight: bold; margin-top: 10px; transition: 0.3s;}
+        
+        button.action-btn { background-color: #3498db; color: #fff; padding: 15px; border: none; border-radius: 8px; cursor: pointer; font-size: 18px; width: 100%; font-weight: bold; margin-top: 10px; transition: 0.3s; letter-spacing: 1px;}
         button.action-btn:hover { background-color: #2980b9; }
         button.action-btn:disabled { background-color: #95a5a6; cursor: not-allowed; }
-        .result-box { margin-top: 30px; display: none; background: #ebf5fb; border-left: 6px solid #2980b9; padding: 20px; border-radius: 8px;}
+
+        .result-box { margin-top: 30px; display: none; animation: fadeIn 0.5s;}
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .summary-card { background: #ebf5fb; border-left: 6px solid #2980b9; padding: 20px; border-radius: 8px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;}
+        .summary-title { font-size: 18px; color: #2c3e50; font-weight: bold; line-height: 1.5; }
         .highlight-premium { color: #c0392b; font-weight: 900; font-size: 32px; }
-        .status-bar { text-align: center; font-size: 14px; color: #e67e22; font-weight: bold; margin-bottom: 15px; }
+
+        .benefit-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .benefit-table th, .benefit-table td { padding: 12px 15px; text-align: left; border: 1px solid #ecf0f1; font-size: 16px; }
+        .benefit-table th { background-color: #34495e; color: #fff; font-weight: bold; width: 60%; }
+        .benefit-table tr:nth-child(even) { background-color: #f8f9f9; }
+        .val-col { color: #d35400; font-weight: bold; text-align: right;}
+
+        .multiplier-note { background: #fef9e7; border: 1px solid #f1c40f; border-left: 6px solid #f39c12; padding: 15px; border-radius: 6px; font-size: 15px; color: #856404; margin-bottom: 20px; line-height: 1.6;}
+        
+        @media screen and (max-width: 768px) {
+            .form-group { min-width: 100%; }
+            .summary-card { flex-direction: column; align-items: flex-start; }
+            .tab-btn { font-size: 16px; padding: 12px; }
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>✈️ IFA 旅平險動態報價系統</h1>
+    <h1>✈️ IFA 旅平險報價系統</h1>
+    <div id="status_message" class="status-bar" style="background-color: #fcf3cf; color: #d35400;">⏳ 正在連線載入 GitHub 遠端費率資料庫...</div>
     
-    <div id="status_message" class="status-bar">⏳ 正在連線載入遠端費率資料庫...</div>
+    <div class="tab-container">
+        <button class="tab-btn active" id="tab_life" onclick="switchTab('life')">南山人壽旅平險</button>
+        <button class="tab-btn" id="tab_property" onclick="switchTab('property')">南山產物 (金平安 Pro6)</button>
+    </div>
 
     <div class="form-row">
-        <div class="form-group">
-            <label>人壽商品組合</label>
-            <select id="plan_select" onchange="updateAmountOptions()">
-                <!-- 下拉選單將由系統動態生成 -->
+        <div class="form-group" id="dest_group">
+            <label>旅遊目的地</label>
+            <select id="destination" onchange="updateDynamicUI()">
+                <option value="overseas" selected>國外旅遊</option>
+                <option value="domestic">國內旅遊</option>
             </select>
         </div>
 
         <div class="form-group">
-            <label>意外身故保額 (萬)</label>
-            <!-- 保額不再寫死，而是根據 JSON 內擁有的級距動態產生 -->
-            <select id="amount_select"></select>
+            <label>被保險人年齡</label>
+            <select id="age_group" onchange="updateDynamicUI()">
+                <option value="over_15" selected>滿 15 足歲 (含) 以上</option>
+                <option value="under_15">未滿 15 足歲</option>
+            </select>
         </div>
 
         <div class="form-group">
-            <label>旅遊天數 (1~180天)</label>
-            <input type="number" id="days" value="5" min="1" max="180">
+            <label id="days_label">旅遊天數</label>
+            <input type="number" id="days" value="5" min="1" max="180" oninput="validateDays()">
+        </div>
+    </div>
+    
+    <div class="form-row" id="product_selection_row">
+        <div class="form-group" style="flex: 2;">
+            <label id="product_label">投保計畫組合</label>
+            <select id="plan_select" onchange="updateAmountOptions()"></select>
+        </div>
+        
+        <div class="form-group" id="amount_group" style="flex: 1;">
+            <label id="amount_label">意外身故保額</label>
+            <select id="custom_amount"></select>
         </div>
     </div>
 
-    <button id="calc_btn" class="action-btn" onclick="calculateTravel()" disabled>產出精算報價</button>
+    <button id="calc_btn" class="action-btn" onclick="calculateTravel()" disabled>產出精確報價與保障總表</button>
 
     <div id="resultBox" class="result-box">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <div id="summaryTitle" style="font-size: 18px; color: #2c3e50; font-weight: bold;"></div>
+        <div class="summary-card">
+            <div class="summary-title" id="summaryTitle"></div>
             <div style="text-align: right;">
-                <span style="font-size: 16px; color: #7f8c8d;">精確總保費：</span><br>
+                <span style="font-size: 16px; color: #7f8c8d;">表定精確總保費：</span><br>
                 <span class="highlight-premium" id="totalPremium">0</span> <span style="font-size: 18px; color: #2c3e50; font-weight: bold;">元</span>
             </div>
         </div>
+
+        <div class="multiplier-note" id="overseasNote" style="display:none;">
+            💡 <strong>海外突發疾病限額放大機制：</strong><br>
+            前往 <strong>美加、歐洲地區</strong> 調整係數為保額的 <strong>300%</strong>；<strong>日韓、紐澳地區</strong> 為 <strong>200%</strong>；其他地區為 100%。(下方表格顯示為基礎 100% 額度，實際理賠依發生地自動放大)
+        </div>
+
+        <table class="benefit-table" id="benefitTable">
+        </table>
     </div>
 </div>
 
 <script>
-    // 準備一個空物件，用來接收外部 JSON 資料庫
+    let currentTab = 'life';
     let globalRatesDB = {};
 
-    // 系統初始化：利用 Fetch API非同步讀取 rates.json
+    // 產險端固定保障內容 (已將計畫四修正為成人、計畫五為幼童)
+    const property_benefits = {
+        'pro6_p1': { name: '計畫一', death: '2,000萬', med: '100萬', ill_in: '100萬', inconv: '包含', liability: '500萬' },
+        'pro6_p2': { name: '計畫二', death: '1,000萬', med: '100萬', ill_in: '100萬', inconv: '包含', liability: '300萬' },
+        'pro6_p3': { name: '計畫三', death: '500萬', med: '50萬', ill_in: '50萬', inconv: '包含', liability: '300萬' },
+        'pro6_p4': { name: '計畫四 (*限15-85歲)', death: '300萬', med: '10萬', ill_in: '10萬', inconv: '包含', liability: '100萬' },
+        'pro6_xiaoA': { name: '小三通計畫A', death: '300萬', med: '20萬', ill_in: '20萬', inconv: '包含', liability: '100萬' },
+        'pro6_p5': { name: '計畫五', death: '69萬', med: '20萬', ill_in: '20萬', inconv: '包含', liability: '100萬' },
+        'pro6_p6': { name: '計畫六-童遊', death: '69萬', med: '10萬', ill_in: '10萬', inconv: '包含', liability: '100萬' },
+        'pro6_xiaoB': { name: '小三通計畫B-童遊', death: '69萬', med: '10萬', ill_in: '10萬', inconv: '包含', liability: '100萬' }
+    };
+
+    const product_mapping = {
+        'domestic': {
+            'over_15': [ { id: 'sta_smr', name: 'STA + SMR (國內優質首選)' }, { id: 'sta', name: 'STA (單獨投保)' } ],
+            'under_15': [ { id: 'sta_smr', name: 'STA + SMR (國內優質首選)' } ]
+        },
+        'overseas': {
+            'over_15': [
+                { id: 'snsota', name: 'SNSOTA (海外最佳推薦)' },
+                { id: 'aota', name: 'AOTA (海外旅行平安保險)' },
+                { id: 'aota_aat', name: 'AOTA + AAT (含海外專機)' }
+            ],
+            'under_15': [
+                { id: 'aota_child', name: 'AOTA (未滿15足歲海外旅平險)' },
+                { id: 'aota_aat_child', name: 'AOTA + AAT (含海外醫療專機)' }
+            ]
+        },
+        'property': {
+            'over_15': [
+                { id: 'pro6_p1', name: property_benefits['pro6_p1'].name },
+                { id: 'pro6_p2', name: property_benefits['pro6_p2'].name },
+                { id: 'pro6_p3', name: property_benefits['pro6_p3'].name },
+                { id: 'pro6_p4', name: property_benefits['pro6_p4'].name },
+                { id: 'pro6_xiaoA', name: property_benefits['pro6_xiaoA'].name }
+            ],
+            'under_15': [
+                { id: 'pro6_p5', name: property_benefits['pro6_p5'].name },
+                { id: 'pro6_p6', name: property_benefits['pro6_p6'].name },
+                { id: 'pro6_xiaoB', name: property_benefits['pro6_xiaoB'].name }
+            ]
+        }
+    };
+
     window.onload = async function() {
         try {
             const response = await fetch('rates.json');
             if (!response.ok) throw new Error('Network response was not ok');
-            
             globalRatesDB = await response.json();
             
-            document.getElementById('status_message').innerText = "✅ 費率庫載入完成 (Cloud Sync)";
-            document.getElementById('status_message').style.color = "#27ae60";
+            document.getElementById('status_message').innerText = "✅ GitHub 費率資料庫連線成功！系統準備就緒。";
+            document.getElementById('status_message').style.backgroundColor = "#d4efdf";
+            document.getElementById('status_message').style.color = "#1e8449";
             document.getElementById('calc_btn').disabled = false;
             
-            initPlanOptions();
-            
+            switchTab('life');
         } catch (error) {
-            document.getElementById('status_message').innerText = "🚨 費率庫載入失敗！請確認 rates.json 檔案與伺服器狀態。";
+            document.getElementById('status_message').innerText = "🚨 費率庫載入失敗！請確認 rates.json 是否已正確上傳至 GitHub 同一資料夾。";
+            document.getElementById('status_message').style.backgroundColor = "#fadbd8";
             document.getElementById('status_message').style.color = "#c0392b";
-            console.error("Error loading rates:", error);
         }
     };
 
-    // 將 JSON 內的第一層 Key 自動轉化為險種選單
-    function initPlanOptions() {
-        const planSelect = document.getElementById('plan_select');
-        planSelect.innerHTML = '';
-        
-        // 為了閱讀友善，我們做一個簡單的名稱對照表
-        const planNames = {
-            'sta': 'STA (單獨投保)',
-            'sta_smr': 'STA + SMR (國內優質首選)',
-            'snsota': 'SNSOTA (國外最佳推薦)',
-            'aota': 'AOTA (海外旅平險)',
-            'aota_aat': 'AOTA + AAT (含海外專機)'
-        };
+    function switchTab(tabName) {
+        currentTab = tabName;
+        document.getElementById('tab_life').classList.remove('active');
+        document.getElementById('tab_property').classList.remove('active');
+        document.getElementById(`tab_${tabName}`).classList.add('active');
 
-        for (let key in globalRatesDB) {
-            let opt = document.createElement('option');
-            opt.value = key;
-            opt.text = planNames[key] || key.toUpperCase();
-            planSelect.appendChild(opt);
+        const destGroup = document.getElementById('dest_group');
+        const daysLabel = document.getElementById('days_label');
+        const daysInput = document.getElementById('days');
+
+        if (tabName === 'property') {
+            destGroup.style.display = 'none'; 
+            daysLabel.innerText = "旅遊天數 (產險 1~20 天)";
+            daysInput.max = 20;
+            if (parseInt(daysInput.value) > 20) daysInput.value = 20;
+        } else {
+            destGroup.style.display = 'block'; 
+            daysLabel.innerText = "旅遊天數 (人壽 1~180 天)";
+            daysInput.max = 180;
         }
+
+        document.getElementById('resultBox').style.display = 'none';
+        updateDynamicUI();
+    }
+
+    function validateDays() {
+        const daysInput = document.getElementById('days');
+        let maxDays = currentTab === 'property' ? 20 : 180;
+        if (parseInt(daysInput.value) > maxDays) daysInput.value = maxDays;
+    }
+
+    function updateDynamicUI() {
+        const dest = currentTab === 'property' ? 'property' : document.getElementById('destination').value;
+        const ageGroup = document.getElementById('age_group').value;
+        const planSelect = document.getElementById('plan_select');
         
+        planSelect.innerHTML = '';
+        let options = product_mapping[dest][ageGroup];
+        
+        options.forEach(opt => {
+            let optionElement = document.createElement('option');
+            optionElement.value = opt.id;
+            optionElement.text = opt.name;
+            planSelect.appendChild(optionElement);
+        });
+
         updateAmountOptions();
     }
 
-    // 根據選擇的險種，去 JSON 裡翻找有建立哪些「保額級距」，動態生成保額選單
     function updateAmountOptions() {
-        const planKey = document.getElementById('plan_select').value;
-        const amountSelect = document.getElementById('amount_select');
+        const amountSelect = document.getElementById('custom_amount');
         amountSelect.innerHTML = '';
+        const ageGroup = document.getElementById('age_group').value;
+        const planKey = document.getElementById('plan_select').value;
 
-        let targetPlanData = globalRatesDB[planKey];
-        if (!targetPlanData) return;
-
-        // 處理 JSON 結構相容性：判斷底下是直接接保額(如 "1000")，還是包了一層年齡(如 "over_15")
-        let amountsObj = targetPlanData;
-        if (targetPlanData['over_15']) {
-            amountsObj = targetPlanData['over_15'];
+        if (currentTab === 'property') {
+            let opt = document.createElement('option');
+            opt.value = planKey;
+            opt.text = property_benefits[planKey].death + " (依計畫固定)";
+            amountSelect.appendChild(opt);
+            return;
         }
 
-        // 取出所有保額級距並排序 (例如 10, 50, 100, 1000)
-        let availableAmounts = Object.keys(amountsObj).map(Number).sort((a, b) => a - b);
+        let targetData = globalRatesDB[planKey];
+        if (!targetData) return;
+        if (targetData[ageGroup]) targetData = targetData[ageGroup];
 
-        availableAmounts.forEach(amt => {
+        // 提取 JSON 中擁有的單位，並乘以 10 換算為萬 (例如 key "100" -> 1000萬)
+        let availableUnits = Object.keys(targetData).map(Number).sort((a, b) => a - b);
+        
+        availableUnits.forEach(unit => {
+            let actualAmount = unit * 10;
             let opt = document.createElement('option');
-            opt.value = amt;
-            // 若數字較小可能是代表「十萬」，這裡可以依您團隊邏輯微調，統一顯示
-            opt.text = `${amt} 萬`;
-            // 預設選擇 1000 萬
-            if (amt === 1000 || amt === 100) opt.selected = true; 
+            opt.value = unit; 
+            opt.text = `${actualAmount} 萬`;
+            if (actualAmount === 1000 || actualAmount === 69) opt.selected = true; 
             amountSelect.appendChild(opt);
         });
     }
 
-    // 執行精算：直接去 JSON 物件裡抓取「絕對位置」的數字
     function calculateTravel() {
-        const planKey = document.getElementById('plan_select').value;
-        const planName = document.getElementById('plan_select').options[document.getElementById('plan_select').selectedIndex].text;
-        const amountKey = document.getElementById('amount_select').value;
+        const ageGroup = document.getElementById('age_group').value;
         const days = parseInt(document.getElementById('days').value);
+        const planSelect = document.getElementById('plan_select');
+        const planKey = planSelect.value;
+        const planName = planSelect.options[planSelect.selectedIndex].text;
         
-        let targetPlanData = globalRatesDB[planKey];
-        
-        // 結構相容性處理
-        if (targetPlanData['over_15']) {
-            targetPlanData = targetPlanData['over_15'];
+        if (!days || days < 1) {
+            alert("請輸入有效的旅遊天數");
+            return;
         }
 
-        let premiumDisplay = "(費率未建置)";
+        let premiumDisplay = 0;
+        let tableHTML = "";
 
-        if (targetPlanData && targetPlanData[amountKey]) {
-            const ratesArray = targetPlanData[amountKey];
-            if (days < ratesArray.length) {
-                premiumDisplay = ratesArray[days].toLocaleString();
+        if (currentTab === 'property') {
+            // 讀取 Pro6 JSON 資料庫
+            let proData = globalRatesDB['pro6'];
+            let ageFolder = ageGroup === 'over_15' ? 'adult' : 'child';
+            
+            if (proData && proData[ageFolder] && proData[ageFolder][planKey]) {
+                const ratesArray = proData[ageFolder][planKey];
+                premiumDisplay = days < ratesArray.length ? ratesArray[days].toLocaleString() : `(超出天數)`;
             } else {
-                premiumDisplay = `(尚無 ${days} 天費率)`;
+                premiumDisplay = "(尚未建置此產險費率)";
+            }
+            
+            let b = property_benefits[planKey];
+            tableHTML = `
+                <tr><th>意外身故 / 失能保險金</th><td class="val-col">${b.death}</td></tr>
+                <tr><th>傷害醫療保險金 (實支實付)</th><td class="val-col">${b.med}</td></tr>
+                <tr><th>海外突發疾病醫療</th><td class="val-col">${b.ill_in}</td></tr>
+                <tr><th>旅行不便險 (班機延誤/行李等)</th><td class="val-col" style="color:#2980b9;">${b.inconv}</td></tr>
+                <tr><th>第三人責任保險</th><td class="val-col" style="color:#8e44ad;">${b.liability}</td></tr>
+            `;
+            document.getElementById('overseasNote').style.display = 'block';
+
+        } else {
+            // 人壽端計算
+            const amountUnit = document.getElementById('custom_amount').value;
+            const actualAmount = amountUnit * 10;
+            let targetData = globalRatesDB[planKey];
+            
+            if (targetData && targetData[ageGroup]) targetData = targetData[ageGroup];
+
+            if (targetData && targetData[amountUnit]) {
+                const ratesArray = targetData[amountUnit];
+                premiumDisplay = days < ratesArray.length ? ratesArray[days].toLocaleString() : `(尚無 ${days} 天費率)`;
+            } else {
+                premiumDisplay = "(費率庫異常)";
+            }
+            
+            let medAmount = (actualAmount * 0.1).toFixed(0);
+            if(ageGroup === 'under_15' && actualAmount === 69) medAmount = 20; // 幼童高醫療設定特例
+
+            tableHTML = `
+                <tr><th>意外身故 / 喪葬費用 / 失能保險金</th><td class="val-col">${actualAmount} 萬</td></tr>
+                <tr><th>傷害醫療保險金</th><td class="val-col">${medAmount} 萬</td></tr>
+            `;
+
+            if(document.getElementById('destination').value === 'overseas') {
+                tableHTML += `<tr><th>海外突發疾病醫療 (含住院/門診/急診)</th><td class="val-col">依保單條款限額</td></tr>`;
+                if(planKey.includes('aat')) {
+                    tableHTML += `<tr><th>海外醫療專機運送服務 (AAT)</th><td class="val-col" style="color:#8e44ad;">包含醫療專機服務</td></tr>`;
+                }
+                document.getElementById('overseasNote').style.display = 'block';
+            } else {
+                document.getElementById('overseasNote').style.display = 'none';
             }
         }
 
-        document.getElementById('summaryTitle').innerHTML = `所選組合：${planName} <br><span style="font-size:14px; color:#7f8c8d;">保額 ${amountKey} 萬 | 行程 ${days} 天</span>`;
+        document.getElementById('summaryTitle').innerHTML = `
+            ${currentTab === 'property' ? '🛡️ 南山產物 金平安Pro6' : '🏥 南山人壽 旅平險'} <br>
+            <span style="font-size:15px; color:#7f8c8d; font-weight:normal;">
+                被保險人：${ageGroup === 'over_15' ? '滿15足歲(含)以上' : '未滿15足歲'} | 行程：${days} 天
+            </span><br>
+            <span style="font-size:14px; color:#34495e;">所選組合：${planName}</span>
+        `;
+        
         document.getElementById('totalPremium').innerText = premiumDisplay;
         document.getElementById('resultBox').style.display = 'block';
     }
