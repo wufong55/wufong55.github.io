@@ -22,7 +22,7 @@
         .summary-card { background: #f4f6f7; border-left: 5px solid #34495e; padding: 20px; border-radius: 6px; margin-bottom: 25px; font-size: 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;}
         .highlight { color: #d35400; font-weight: bold; font-size: 26px; }
         
-        /* 左右並排保障區塊 (字體放大版) */
+        /* 左右並排保障區塊 */
         .comparison-container { display: flex; gap: 15px; margin-bottom: 25px; flex-wrap: wrap;}
         .comparison-col { flex: 1; min-width: 300px; background: #fff; border: 1px solid #cbd5e1; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.05);}
         .col-header { padding: 18px; text-align: center; font-weight: bold; font-size: 22px; color: #fff; line-height: 1.4;}
@@ -35,7 +35,7 @@
         .b-title small { font-size: 15px !important; display: block; margin-top: 4px;}
         .b-amount { color: #c0392b; font-weight: bold; text-align: right; width: 40%; font-size: 21px;}
 
-        /* 疾病警示區塊 (字體放大版) */
+        /* 疾病警示區塊 */
         .tsunami-alert { background: #fff3cd; border: 1px solid #ffeeba; border-left: 5px solid #ffc107; padding: 25px; border-radius: 8px; margin-bottom: 25px; }
         .tsunami-table { width: 100%; border-collapse: collapse; background: #fff; min-width: 600px; margin-top: 15px;}
         .tsunami-table th, .tsunami-table td { padding: 15px; border: 1px solid #ffeeba; text-align: left; font-size: 18px; line-height: 1.5;}
@@ -142,7 +142,7 @@
         <div id="upgradeAlert" class="upgrade-alert"></div>
 
         <div class="disclaimer">
-            本試算僅供參考，實際保費與理賠認定以保單條款為準。定期險試算基準為 1HIR + 1HSCO A-I型 依投保年齡精算累計至85歲之真實總保費。
+            本試算僅供參考，實際保費與理賠認定以保單條款為準。定期險試算基準為 1HIR (依計畫對應10/20/30單位) + 1HSCO A-I型(單一套裝) 依投保年齡精算累計至85歲之真實總保費。
         </div>
 
         <button class="btn-print" onclick="window.print()">🖨️ 儲存為 PDF / 列印專屬報告</button>
@@ -186,24 +186,24 @@
         'F': [0, 4338, 4338, 4338, 4338, 3017, 2429, 1954, 1629, 1412, 1230, 1078, 959, 905, 884, 880, 891, 907, 938, 978, 1025, 1084, 1161, 1271, 1401, 1543, 1692, 1849, 2022, 2205, 2383, 2543, 2666, 2714, 2722, 2708, 2684, 2656, 2617, 2573, 2535, 2503, 2494, 2528, 2584, 2652, 2733, 2826, 2942, 3073, 3210, 3349, 3482, 3601, 3714, 3831, 3961, 4119, 4338, 4589, 5124, 5407, 5675, 5912, 6131, 6346, 6566, 6807, 7087, 7387, 7798, 8090, 8450, 8812, 9534, 38431, 39360, 40281, 41210, 42601, 43985, 46875, 51164, 56012, 61331, 67091]
     };
 
-    // 精算函數：輸入性別、投保年齡與 WEHS 計畫，計算 1HIR + 1HSCO A-I型 累計至 85 歲之總保費
+    // 精算函數：輸入性別、投保年齡與 WEHS 計畫，精準加總 1HIR(依計畫單位數) + 1HSCO A-I型 累計至 85 歲之總保費
     function getTermCostTo85(gender, startAge, plan) {
-        const multiplier = plan / 10;
         let total = 0;
+        let hir_units = parseInt(plan); // 若選擇計畫10即為10單位(1000元)，計畫20為20單位，計畫30為30單位
         for(let i = startAge; i <= 85; i++) {
-            let cost_1HIR = 0;
+            let cost_1HIR_per_unit = 0;
             let cost_1HSCO = 0;
             
             // 首年度使用初次投保費率，後續使用續保費率
             if (i === startAge) {
-                cost_1HIR = rate_1HIR_init[gender][i] * 10; // 1HIR 費率表為每百元，計畫10基數為10單位(1000元)
+                cost_1HIR_per_unit = rate_1HIR_init[gender][i]; 
                 cost_1HSCO = rate_1HSCO_init[gender][i]; 
             } else {
-                cost_1HIR = rate_1HIR_ren[gender][i] * 10;
+                cost_1HIR_per_unit = rate_1HIR_ren[gender][i];
                 cost_1HSCO = rate_1HSCO_ren[gender][i];
             }
-            // 依據 WEHS 選擇計畫等比放大 (計畫20乘2倍，計畫30乘3倍)
-            total += (cost_1HIR + cost_1HSCO) * multiplier;
+            // 精準累加：1HIR依單位數乘算，1HSCO為單一費率直接相加
+            total += (cost_1HIR_per_unit * hir_units) + cost_1HSCO;
         }
         return total;
     }
@@ -299,25 +299,25 @@
             document.getElementById('upgradeAlert').style.display = 'none';
         }
 
-        // 取代原有的估算公式，改為呼叫精確的自然費率累加函數
-        const termTotal = getTermCostTo85(gender, parseInt(age), parseInt(plan));
+        // 呼叫精確的自然費率累加函數，1HIR依單位乘算，1HSCO不倍增
+        const termTotal = getTermCostTo85(gender, parseInt(age), plan);
         
         const wehsWidth = Math.min((totalPremium / Math.max(totalPremium, termTotal)) * 100, 100);
         const termWidth = Math.min((termTotal / Math.max(totalPremium, termTotal)) * 100, 100);
 
         document.getElementById('crossAnalysis').innerHTML = `
             <h3>📈 保費黃金交叉分析 (對決定期險迷思)</h3>
-            <p style="font-size:18px; color:#555; margin-bottom:15px;">許多人以為定期險 (1HIR + 1HSCO A-I型) 較便宜，但若將<b>定期險保額調整為與 WEHS 計畫 ${plan} 相同基準</b>，計算至 85 歲，您會發現其保費呈指數型飆升：</p>
+            <p style="font-size:18px; color:#555; margin-bottom:15px;">許多人以為定期險較便宜，但若將<b>定期險保額調整為與 WEHS 計畫 ${plan} 相同基準</b> (1HIR ${plan}單位 + 1HSCO A-I型)，逐年累加自然費率至 85 歲，您會發現其高齡階段保費呈指數型飆升：</p>
             <div style="font-size:16px; margin-bottom:5px;"><strong>WEHS 計畫 ${plan} (${term}年總繳，保障終身)</strong></div>
             <div class="bar-container">
                 <div class="bar-wehs" style="width: ${wehsWidth}%;">${Math.round(totalPremium/10000)} 萬元</div>
             </div>
-            <div style="font-size:16px; margin-bottom:5px; margin-top: 15px;"><strong>同等保額之定期險組合 (繳至85歲預估總成本，保障中斷)</strong></div>
+            <div style="font-size:16px; margin-bottom:5px; margin-top: 15px;"><strong>同等保額之定期險組合 (繳至85歲真實累加總成本，保障中斷)</strong></div>
             <div class="bar-container">
                 <div class="bar-term" style="width: ${termWidth}%;">${Math.round(termTotal/10000)} 萬元</div>
             </div>
             <div style="background:#fef9e7; padding:15px; border-radius:5px; margin-top:15px; font-size:16px; color:#d35400; line-height: 1.6;">
-                🔥 <b>殘酷真相：</b>同等額度的定期險不僅總成本高出許多，且在最容易生病的 85 歲後保障歸零；WEHS 繳滿後不必再繳，持續提供最高 ${p.max} 的醫療金庫，未用盡更可傳承給下一代。
+                🔥 <b>殘酷真相：</b>即使精準剔除不必要的附約，同等額度定期險的高齡保費負擔依然驚人，且在最容易生病的 85 歲後保障歸零；WEHS 繳滿後不必再繳，持續提供最高 ${p.max} 的醫療金庫，未用盡更可傳承。
             </div>
         `;
 
