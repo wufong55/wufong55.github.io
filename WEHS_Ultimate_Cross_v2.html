@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>南山人壽 實健溢百住院醫療終身保險WEHS</title>
+    <title>實健溢百住院醫療終身保險WEHS</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; color: #333; padding: 20px; line-height: 1.6; margin: 0; }
         .container { max-width: 950px; margin: auto; background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
@@ -19,45 +19,46 @@
         
         .result-box { margin-top: 30px; display: none; }
         
-        .summary-card { background: #f4f6f7; border-left: 5px solid #34495e; padding: 20px; border-radius: 6px; margin-bottom: 25px; font-size: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;}
-        .highlight { color: #d35400; font-weight: bold; font-size: 22px; }
+        .summary-card { background: #f4f6f7; border-left: 5px solid #34495e; padding: 20px; border-radius: 6px; margin-bottom: 25px; font-size: 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;}
+        .highlight { color: #d35400; font-weight: bold; font-size: 26px; }
         
-        /* 左右並排保障區塊 */
+        /* 左右並排保障區塊 (字體放大版) */
         .comparison-container { display: flex; gap: 15px; margin-bottom: 25px; flex-wrap: wrap;}
         .comparison-col { flex: 1; min-width: 300px; background: #fff; border: 1px solid #cbd5e1; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.05);}
-        .col-header { padding: 15px; text-align: center; font-weight: bold; font-size: 18px; color: #fff; }
+        .col-header { padding: 18px; text-align: center; font-weight: bold; font-size: 22px; color: #fff; line-height: 1.4;}
         .header-pre { background-color: #3498db; }
         .header-post { background-color: #e67e22; }
         .benefit-list { list-style: none; padding: 0; margin: 0; }
-        .benefit-list li { padding: 12px 15px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;}
+        .benefit-list li { padding: 16px 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;}
         .benefit-list li:last-child { border-bottom: none; }
-        .b-title { color: #34495e; font-weight: bold; width: 55%; font-size: 14px;}
-        .b-amount { color: #c0392b; font-weight: bold; text-align: right; width: 45%; font-size: 15px;}
+        .b-title { color: #34495e; font-weight: bold; width: 60%; font-size: 18px; line-height: 1.5;}
+        .b-title small { font-size: 15px !important; display: block; margin-top: 4px;}
+        .b-amount { color: #c0392b; font-weight: bold; text-align: right; width: 40%; font-size: 21px;}
 
-        /* 疾病警示區塊 */
-        .tsunami-alert { background: #fff3cd; border: 1px solid #ffeeba; border-left: 5px solid #ffc107; padding: 20px; border-radius: 8px; margin-bottom: 25px; }
-        .tsunami-table { width: 100%; border-collapse: collapse; background: #fff; min-width: 600px; margin-top:10px;}
-        .tsunami-table th, .tsunami-table td { padding: 10px; border: 1px solid #ffeeba; text-align: left; font-size: 14px;}
-        .tsunami-table th { background-color: #ffe8a1; color: #856404; text-align: center;}
+        /* 疾病警示區塊 (字體放大版) */
+        .tsunami-alert { background: #fff3cd; border: 1px solid #ffeeba; border-left: 5px solid #ffc107; padding: 25px; border-radius: 8px; margin-bottom: 25px; }
+        .tsunami-table { width: 100%; border-collapse: collapse; background: #fff; min-width: 600px; margin-top: 15px;}
+        .tsunami-table th, .tsunami-table td { padding: 15px; border: 1px solid #ffeeba; text-align: left; font-size: 18px; line-height: 1.5;}
+        .tsunami-table th { background-color: #ffe8a1; color: #856404; text-align: center; font-size: 19px;}
         
         /* 黃金交叉分析面板 */
         .cross-analysis { background: #fdfefe; border: 1px solid #e5e8e8; border-radius: 8px; padding: 20px; margin-bottom: 25px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border-top: 4px solid #e74c3c;}
-        .cross-analysis h3 { margin-top: 0; color: #c0392b; font-size: 20px;}
-        .bar-container { width: 100%; background-color: #ecf0f1; border-radius: 6px; margin-bottom: 10px; overflow: hidden; position: relative; height: 35px;}
-        .bar-wehs { height: 100%; background-color: #2980b9; text-align: right; line-height: 35px; color: white; padding-right: 10px; font-weight: bold; white-space: nowrap; transition: width 1s ease-in-out;}
-        .bar-term { height: 100%; background-color: #e74c3c; text-align: right; line-height: 35px; color: white; padding-right: 10px; font-weight: bold; white-space: nowrap; transition: width 1s ease-in-out;}
+        .cross-analysis h3 { margin-top: 0; color: #c0392b; font-size: 22px;}
+        .bar-container { width: 100%; background-color: #ecf0f1; border-radius: 6px; margin-bottom: 10px; overflow: hidden; position: relative; height: 38px;}
+        .bar-wehs { height: 100%; background-color: #2980b9; text-align: right; line-height: 38px; color: white; padding-right: 15px; font-size: 16px; font-weight: bold; white-space: nowrap; transition: width 1s ease-in-out;}
+        .bar-term { height: 100%; background-color: #e74c3c; text-align: right; line-height: 38px; color: white; padding-right: 15px; font-size: 16px; font-weight: bold; white-space: nowrap; transition: width 1s ease-in-out;}
 
         .closing-script { background: #fdfefe; border: 1px solid #e5e8e8; padding: 25px; border-radius: 8px; margin-bottom: 20px; border-left: 5px solid #2c3e50; }
-        .closing-script p { font-size: 16px; color: #444; margin-bottom: 0; line-height: 1.8; }
+        .closing-script p { font-size: 18px; color: #444; margin-bottom: 0; line-height: 1.8; }
         
-        /* 升級提示面板 (移至最後) */
+        /* 升級提示面板 */
         .upgrade-alert { display: none; background: #eafaf1; border: 1px solid #c8e6c9; border-left: 6px solid #2ecc71; padding: 20px; border-radius: 8px; margin-bottom: 20px; margin-top: 20px; animation: pulse 2s infinite; }
-        .upgrade-alert h3 { margin-top: 0; color: #27ae60; font-size: 18px; margin-bottom: 10px;}
-        .btn-upgrade { background-color: #27ae60; color: white; border: none; padding: 10px 20px; font-size: 16px; font-weight: bold; border-radius: 5px; cursor: pointer; width: auto; margin-top: 10px; box-shadow: 0 4px 6px rgba(39, 174, 96, 0.3); transition: 0.2s;}
+        .upgrade-alert h3 { margin-top: 0; color: #27ae60; font-size: 20px; margin-bottom: 10px;}
+        .btn-upgrade { background-color: #27ae60; color: white; border: none; padding: 12px 24px; font-size: 18px; font-weight: bold; border-radius: 5px; cursor: pointer; width: auto; margin-top: 10px; box-shadow: 0 4px 6px rgba(39, 174, 96, 0.3); transition: 0.2s;}
         .btn-upgrade:hover { background-color: #219a52; transform: translateY(-2px); box-shadow: 0 6px 8px rgba(39, 174, 96, 0.4);}
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(46, 204, 113, 0); } 100% { box-shadow: 0 0 0 0 rgba(46, 204, 113, 0); } }
 
-        .disclaimer { font-size: 13px; color: #7f8c8d; text-align: center; margin-top: 25px; border-top: 1px dashed #bdc3c7; padding-top: 15px; }
+        .disclaimer { font-size: 14px; color: #7f8c8d; text-align: center; margin-top: 25px; border-top: 1px dashed #bdc3c7; padding-top: 15px; }
 
         @media screen and (max-width: 768px) {
             .summary-card { flex-direction: column; align-items: flex-start; }
@@ -77,7 +78,7 @@
 <body>
 
 <div class="container">
-    <h1>🛡️ 南山人壽 實健溢百住院醫療終身保險 WEHS</h1>
+    <h1>🛡️ 實健溢百住院醫療終身保險 WEHS</h1>
     
     <div class="form-row">
         <div class="form-group">
@@ -113,16 +114,13 @@
 
     <div id="resultBox" class="result-box">
         
-        <!-- 基礎摘要 -->
         <div class="summary-card" id="summaryContent"></div>
 
-        <!-- 雙階段保障 -->
         <div class="comparison-container" id="comparisonContent"></div>
 
-        <!-- 高齡自費海嘯警示 -->
         <div class="tsunami-alert">
-            <h3 style="color: #856404; margin-top:0;">⚠️ 為什麼 75 歲後的「實支實付」是守護老本的關鍵？</h3>
-            <p style="font-size:14px; color:#664d03; margin-bottom:10px;">醫療科技日新月異，高齡階段最可怕的不是疾病本身，而是「健保不給付，自費付不起」。以下為 75 歲後極易面臨的 5 大高昂自費項目：</p>
+            <h3 style="color: #856404; margin-top:0; font-size: 24px;">⚠️ 為什麼 75 歲後的「實支實付」是守護老本的關鍵？</h3>
+            <p style="font-size:18px; color:#664d03; margin-bottom:15px;">醫療科技日新月異，高齡階段最可怕的不是疾病本身，而是「健保不給付，自費付不起」。以下為 75 歲後極易面臨的 5 大高昂自費項目：</p>
             <div style="overflow-x: auto;">
                 <table class="tsunami-table">
                     <tr><th>高齡常見疾病與治療</th><th>預估自負費用</th><th>WEHS 實支實付應對優勢</th></tr>
@@ -135,21 +133,16 @@
             </div>
         </div>
 
-        <!-- 列印時，此處將強制換頁 -->
-
-        <!-- 保費黃金交叉面板 -->
         <div class="cross-analysis" id="crossAnalysis"></div>
 
-        <!-- 顧問收網結語 -->
         <div class="closing-script">
             <p id="scriptContent"></p>
         </div>
         
-        <!-- 槓桿倍數一鍵升級面板 (移至銷售動線最後方) -->
         <div id="upgradeAlert" class="upgrade-alert"></div>
 
         <div class="disclaimer">
-            本試算僅供參考，實際保費與理賠認定以保單條款為準。定期險試算基準為 1HIR+1HS+1HSCO 動態對應保額累計至85歲之概算。
+            本試算僅供參考，實際保費與理賠認定以保單條款為準。定期險試算基準為 1HIR + 1HSCO A-I型 依投保年齡精算累計至85歲之真實總保費。
         </div>
 
         <button class="btn-print" onclick="window.print()">🖨️ 儲存為 PDF / 列印專屬報告</button>
@@ -173,11 +166,47 @@
         }
     };
     
-    // 定期險組合基準 (以保額單位 10 為基礎, 計算至 85歲 的概算總成本)
-    const termBaseCumulative = {
-        'M': { '0': 1100000, '5': 1050000, '10': 1000000, '15': 950000, '20': 900000, '25': 850000, '30': 800000, '35': 770000, '40': 740000, '45': 700000, '50': 650000, '55': 590000, '60': 520000, '65': 430000, '70': 320000 },
-        'F': { '0': 1150000, '5': 1100000, '10': 1050000, '15': 1000000, '20': 950000, '25': 900000, '30': 850000, '35': 810000, '40': 770000, '45': 720000, '50': 660000, '55': 580000, '60': 500000, '65': 410000, '70': 300000 }
+    // ---------------------------------------------------------
+    // 1HIR 與 1HSCO A-I型 費率資料庫 (初次投保與續保真實費率)
+    // ---------------------------------------------------------
+    const rate_1HIR_init = {
+        'M': [176, 176, 176, 176, 176, 122, 113, 104, 92, 84, 75, 72, 72, 67, 65, 63, 66, 66, 71, 73, 75, 79, 82, 85, 87, 92, 93, 97, 100, 104, 107, 112, 116, 122, 127, 131, 138, 144, 152, 157, 164, 176, 186, 199, 209, 221, 225, 227, 231, 234, 238, 252, 268, 283, 297, 312, 328, 344, 361, 376, 394, 414, 436, 458, 480, 500, 537, 573, 609, 644, 681, 716, 749, 785, 818, 853],
+        'F': [154, 154, 154, 154, 154, 108, 99, 88, 78, 69, 58, 56, 55, 54, 52, 49, 52, 53, 54, 56, 59, 63, 67, 72, 78, 83, 93, 101, 114, 122, 133, 134, 136, 138, 137, 139, 142, 143, 144, 145, 148, 150, 151, 156, 157, 160, 166, 172, 177, 182, 189, 193, 200, 207, 211, 218, 227, 236, 244, 253, 262, 284, 305, 328, 349, 370, 397, 422, 449, 476, 501, 537, 573, 610, 645, 682]
     };
+    const rate_1HIR_ren = {
+        'M': [0, 190, 190, 190, 190, 132, 122, 112, 101, 91, 81, 78, 76, 73, 71, 68, 71, 73, 76, 78, 81, 85, 88, 92, 95, 99, 102, 106, 109, 113, 116, 121, 126, 132, 137, 142, 149, 156, 164, 171, 178, 190, 202, 215, 227, 239, 243, 246, 250, 253, 257, 273, 289, 305, 321, 337, 355, 372, 390, 407, 425, 448, 471, 495, 518, 541, 580, 619, 657, 696, 735, 772, 809, 847, 884, 921, 1020, 1119, 1218, 1317, 1416, 1544, 1671, 1799, 1926, 2054],
+        'F': [0, 167, 167, 167, 167, 118, 107, 96, 85, 74, 63, 61, 59, 58, 56, 54, 56, 58, 59, 61, 63, 68, 74, 79, 85, 90, 101, 111, 122, 132, 143, 145, 146, 148, 149, 151, 153, 155, 156, 158, 160, 163, 165, 168, 170, 173, 179, 185, 192, 198, 204, 210, 216, 223, 229, 235, 245, 255, 264, 274, 284, 307, 330, 354, 377, 400, 428, 456, 485, 513, 541, 580, 619, 658, 697, 736, 815, 895, 974, 1054, 1133, 1236, 1339, 1442, 1545, 1648]
+    };
+    const rate_1HSCO_init = {
+        'M': [4380, 4380, 4380, 4380, 4380, 2984, 2369, 1879, 1562, 1365, 1208, 1082, 985, 953, 953, 968, 994, 1022, 1055, 1090, 1125, 1158, 1187, 1205, 1215, 1228, 1242, 1266, 1309, 1362, 1421, 1485, 1558, 1643, 1738, 1836, 1938, 2035, 2127, 2213, 2298, 2386, 2479, 2582, 2692, 2809, 2934, 3072, 3230, 3401, 3580, 3763, 3953, 4157, 4369, 4587, 4808, 5036, 5274, 5516, 5765, 6020, 6287, 6585, 6675, 7220, 7425, 7629, 7955, 8283, 8905],
+        'F': [4021, 4021, 4021, 4021, 4021, 2796, 2251, 1811, 1510, 1308, 1140, 999, 889, 839, 819, 815, 826, 840, 869, 906, 950, 1005, 1076, 1178, 1298, 1430, 1568, 1713, 1874, 2043, 2208, 2357, 2470, 2515, 2522, 2509, 2487, 2461, 2425, 2384, 2349, 2319, 2311, 2343, 2395, 2458, 2533, 2619, 2726, 2848, 2975, 3103, 3227, 3337, 3442, 3550, 3671, 3817, 4020, 4252, 4748, 5010, 5259, 5478, 5681, 5881, 6084, 6308, 6567, 6845, 7225]
+    };
+    const rate_1HSCO_ren = {
+        'M': [0, 4726, 4726, 4726, 4726, 3220, 2556, 2028, 1686, 1473, 1304, 1168, 1063, 1028, 1028, 1045, 1073, 1103, 1138, 1176, 1214, 1250, 1281, 1300, 1311, 1325, 1340, 1366, 1413, 1470, 1533, 1603, 1681, 1773, 1875, 1981, 2091, 2196, 2295, 2388, 2480, 2575, 2675, 2786, 2905, 3031, 3166, 3315, 3486, 3670, 3863, 4061, 4266, 4486, 4715, 4950, 5188, 5435, 5691, 5953, 6221, 6495, 6785, 7106, 7203, 7791, 8013, 8232, 8585, 8938, 9611, 9995, 10416, 10910, 11443, 41218, 42935, 44679, 46478, 48278, 50087, 54356, 58109, 62259, 66695, 71363],
+        'F': [0, 4338, 4338, 4338, 4338, 3017, 2429, 1954, 1629, 1412, 1230, 1078, 959, 905, 884, 880, 891, 907, 938, 978, 1025, 1084, 1161, 1271, 1401, 1543, 1692, 1849, 2022, 2205, 2383, 2543, 2666, 2714, 2722, 2708, 2684, 2656, 2617, 2573, 2535, 2503, 2494, 2528, 2584, 2652, 2733, 2826, 2942, 3073, 3210, 3349, 3482, 3601, 3714, 3831, 3961, 4119, 4338, 4589, 5124, 5407, 5675, 5912, 6131, 6346, 6566, 6807, 7087, 7387, 7798, 8090, 8450, 8812, 9534, 38431, 39360, 40281, 41210, 42601, 43985, 46875, 51164, 56012, 61331, 67091]
+    };
+
+    // 精算函數：輸入性別、投保年齡與 WEHS 計畫，計算 1HIR + 1HSCO A-I型 累計至 85 歲之總保費
+    function getTermCostTo85(gender, startAge, plan) {
+        const multiplier = plan / 10;
+        let total = 0;
+        for(let i = startAge; i <= 85; i++) {
+            let cost_1HIR = 0;
+            let cost_1HSCO = 0;
+            
+            // 首年度使用初次投保費率，後續使用續保費率
+            if (i === startAge) {
+                cost_1HIR = rate_1HIR_init[gender][i] * 10; // 1HIR 費率表為每百元，計畫10基數為10單位(1000元)
+                cost_1HSCO = rate_1HSCO_init[gender][i]; 
+            } else {
+                cost_1HIR = rate_1HIR_ren[gender][i] * 10;
+                cost_1HSCO = rate_1HSCO_ren[gender][i];
+            }
+            // 依據 WEHS 選擇計畫等比放大 (計畫20乘2倍，計畫30乘3倍)
+            total += (cost_1HIR + cost_1HSCO) * multiplier;
+        }
+        return total;
+    }
 
     const ben = {
         '10': { max: '250萬', d_room: '1,000', d_cancer: '+300', d_icu: '+1,000', d_opd: '500', d_surg_in: '2,000', d_surg_out: '1,000', d_device: '5,000',
@@ -234,7 +263,6 @@
         const deathBenefit = totalPremium * 1.06;
         const p = ben[plan];
 
-        // 升級模組 (依據目前選擇動態推導)
         if(plan === '10') {
             const p20_premium = rates[term][gender][age]['20'];
             const diff_premium = p20_premium - annualPremium;
@@ -243,9 +271,9 @@
             document.getElementById('upgradeAlert').innerHTML = `
                 <div class="upgrade-content" style="display:flex; justify-content: space-between; align-items: center; width: 100%;">
                     <div>
-                        <h3>💡 進階試算：升級計畫 20 效益分析</h3>
-                        每年只需增加 <strong style="color:#d35400;">${(diff_premium/10000).toFixed(2)} 萬</strong> (約 +${diff_ratio}%)，<br>
-                        即可讓 74 歲後的實支實付獨立額度從 250 萬 <b style="color:#c0392b;">直接翻倍至 500 萬</b>！各項限額同步翻倍！
+                        <h3 style="font-size: 20px;">💡 進階試算：升級計畫 20 效益分析</h3>
+                        <span style="font-size: 18px;">每年只需增加 <strong style="color:#d35400;">${(diff_premium/10000).toFixed(2)} 萬</strong> (約 +${diff_ratio}%)，<br>
+                        即可讓 74 歲後的實支實付獨立額度從 250 萬 <b style="color:#c0392b;">直接翻倍至 500 萬</b>！各項限額同步翻倍！</span>
                     </div>
                     <button class="btn-upgrade" onclick="executeUpgrade()">🚀 一鍵升級試算</button>
                 </div>
@@ -259,9 +287,9 @@
             document.getElementById('upgradeAlert').innerHTML = `
                 <div class="upgrade-content" style="display:flex; justify-content: space-between; align-items: center; width: 100%;">
                     <div>
-                        <h3>💡 進階試算：升級計畫 30 效益分析</h3>
-                        每年只需增加 <strong style="color:#d35400;">${(diff_premium/10000).toFixed(2)} 萬</strong> (約 +${diff_ratio}%)，<br>
-                        即可讓 74 歲後的實支實付獨立額度從 500 萬 <b style="color:#c0392b;">直上頂規 750 萬</b>！從容應對最昂貴的重症醫療！
+                        <h3 style="font-size: 20px;">💡 進階試算：升級計畫 30 效益分析</h3>
+                        <span style="font-size: 18px;">每年只需增加 <strong style="color:#d35400;">${(diff_premium/10000).toFixed(2)} 萬</strong> (約 +${diff_ratio}%)，<br>
+                        即可讓 74 歲後的實支實付獨立額度從 500 萬 <b style="color:#c0392b;">直上頂規 750 萬</b>！從容應對最昂貴的重症醫療！</span>
                     </div>
                     <button class="btn-upgrade" onclick="executeUpgrade()">🚀 一鍵升級試算</button>
                 </div>
@@ -271,43 +299,44 @@
             document.getElementById('upgradeAlert').style.display = 'none';
         }
 
-        // 黃金交叉動態連動運算
-        const termTotal = termBaseCumulative[gender][age] * (parseInt(plan) / 10);
+        // 取代原有的估算公式，改為呼叫精確的自然費率累加函數
+        const termTotal = getTermCostTo85(gender, parseInt(age), parseInt(plan));
+        
         const wehsWidth = Math.min((totalPremium / Math.max(totalPremium, termTotal)) * 100, 100);
         const termWidth = Math.min((termTotal / Math.max(totalPremium, termTotal)) * 100, 100);
 
         document.getElementById('crossAnalysis').innerHTML = `
             <h3>📈 保費黃金交叉分析 (對決定期險迷思)</h3>
-            <p style="font-size:15px; color:#555; margin-bottom:10px;">許多人以為定期險(1HIR+1HS+1HSCO)較便宜，但若將<b>定期險保額調整為與 WEHS 計畫 ${plan} 相同基準</b>，計算至 85 歲，您會發現其保費呈指數型飆升：</p>
-            <div style="font-size:14px; margin-bottom:5px;"><strong>WEHS 計畫 ${plan} (${term}年總繳，保障終身)</strong></div>
+            <p style="font-size:18px; color:#555; margin-bottom:15px;">許多人以為定期險 (1HIR + 1HSCO A-I型) 較便宜，但若將<b>定期險保額調整為與 WEHS 計畫 ${plan} 相同基準</b>，計算至 85 歲，您會發現其保費呈指數型飆升：</p>
+            <div style="font-size:16px; margin-bottom:5px;"><strong>WEHS 計畫 ${plan} (${term}年總繳，保障終身)</strong></div>
             <div class="bar-container">
                 <div class="bar-wehs" style="width: ${wehsWidth}%;">${Math.round(totalPremium/10000)} 萬元</div>
             </div>
-            <div style="font-size:14px; margin-bottom:5px;"><strong>同等保額之定期險組合 (繳至85歲預估總成本，保障中斷)</strong></div>
+            <div style="font-size:16px; margin-bottom:5px; margin-top: 15px;"><strong>同等保額之定期險組合 (繳至85歲預估總成本，保障中斷)</strong></div>
             <div class="bar-container">
                 <div class="bar-term" style="width: ${termWidth}%;">${Math.round(termTotal/10000)} 萬元</div>
             </div>
-            <div style="background:#fef9e7; padding:10px; border-radius:5px; margin-top:10px; font-size:14px; color:#d35400;">
+            <div style="background:#fef9e7; padding:15px; border-radius:5px; margin-top:15px; font-size:16px; color:#d35400; line-height: 1.6;">
                 🔥 <b>殘酷真相：</b>同等額度的定期險不僅總成本高出許多，且在最容易生病的 85 歲後保障歸零；WEHS 繳滿後不必再繳，持續提供最高 ${p.max} 的醫療金庫，未用盡更可傳承給下一代。
             </div>
         `;
 
         document.getElementById('summaryContent').innerHTML = `
             <div>
-                首期年繳保費：<strong style="font-size:18px;">${(annualPremium/10000).toFixed(2)} 萬元</strong><br>
-                ${term} 年期總預算：<strong style="font-size:22px;">${(totalPremium/10000).toFixed(2)} 萬元</strong> <br>
+                首期年繳保費：<strong style="font-size:20px;">${(annualPremium/10000).toFixed(2)} 萬元</strong><br>
+                ${term} 年期總預算：<strong style="font-size:24px;">${(totalPremium/10000).toFixed(2)} 萬元</strong> <br>
                 無損傳承金底線：<span class="highlight">${Math.round(deathBenefit).toLocaleString()} 元</span> <br>
-                <span style="font-size:13px; color:#555;">(註：總繳保費 × 1.06，傳承時需扣除已領醫療金)</span>
+                <span style="font-size:15px; color:#555;">(註：總繳保費 × 1.06，傳承時需扣除已領醫療金)</span>
             </div>
             <div style="text-align:right;">
-                <span style="font-size:14px; color:#7f8c8d;">雙階段總給付高達</span><br>
-                <strong style="color:#2980b9; font-size:32px;">${p.max}</strong>
+                <span style="font-size:16px; color:#7f8c8d;">雙階段獨立給付高達</span><br>
+                <strong style="color:#2980b9; font-size:36px;">各 ${p.max}</strong>
             </div>
         `;
 
         document.getElementById('comparisonContent').innerHTML = `
             <div class="comparison-col">
-                <div class="col-header header-pre">保險年齡達 74 歲(不含)前<br><span style="font-size:14px;">【定額給付】最高上限 ${p.max}</span></div>
+                <div class="col-header header-pre">保險年齡達 74 歲(不含)前<br><span style="font-size:18px;">【定額給付】最高獨立額度 ${p.max}</span></div>
                 <ul class="benefit-list">
                     <li><span class="b-title">住院日額保險金 / 日</span><span class="b-amount">${p.d_room}</span></li>
                     <li><span class="b-title">癌症住院日額 / 日</span><span class="b-amount">${p.d_cancer}</span></li>
@@ -319,7 +348,7 @@
                 </ul>
             </div>
             <div class="comparison-col">
-                <div class="col-header header-post">保險年齡達 74 歲(含)起<br><span style="font-size:14px;">【實支實付】最高限額 ${p.max}</span></div>
+                <div class="col-header header-post">保險年齡達 74 歲(含)起<br><span style="font-size:18px;">【實支實付】最高獨立額度 ${p.max}</span></div>
                 <ul class="benefit-list">
                     <li><span class="b-title">每日病房費用限額<br><small style="color:#7f8c8d; font-weight:normal;">(一般病房 / 曾住重症病房)</small></span>
                         <span class="b-amount">${p.r_room_gen} / <span style="color:#e67e22;">${p.r_room_icu}</span></span></li>
@@ -330,14 +359,14 @@
                     <li><span class="b-title">門診手術費用限額 / 次<br><small style="color:#7f8c8d; font-weight:normal;">(若為癌症門診手術放大為 ${p.r_surg_cancer})</small></span>
                         <span class="b-amount">${p.r_surg_gen}</span></li>
                     <li><span class="b-title">住院前後門診費用限額 / 次</span><span class="b-amount">${p.r_opd}</span></li>
-                    <li style="justify-content: center; background: #f9f9f9;"><span class="b-title" style="width:100%; text-align:center; font-size:13px; color:#7f8c8d;">※滿74歲後，亦可依需求選擇切換為「日額給付型」</span></li>
+                    <li style="justify-content: center; background: #f9f9f9;"><span class="b-title" style="width:100%; text-align:center; font-size:15px; color:#7f8c8d;">※滿74歲後，亦可依需求選擇切換為「日額給付型」</span></li>
                 </ul>
             </div>
         `;
 
         document.getElementById('scriptContent').innerHTML = `
             高資產與中產階級在晚年最大的財務風險，往往不是沒錢生活，而是『因病導致資產大幅縮水』。<br><br>
-            這份計畫最大的戰略價值在於<b>【精準的風險隔離】</b>與<b>【無損的資產保全】</b>。透過每年固定的預算投入，我們在保險年齡 74 歲（含）之後建構了一道高達 ${p.max} 的『實支實付防波堤』。未來無論是達文西微創手術、高價標靶藥物，或是精密的人工關節，都由這套系統為您買單，徹底阻絕了高昂醫療自費對您退休老本的侵蝕。<br><br>
+            這份計畫最大的戰略價值在於<b>【精準的風險隔離】</b>與<b>【無損的資產保全】</b>。透過每年固定的預算投入，我們在保險年齡 74 歲（含）之後建構了一道高達 ${p.max} 的『獨立實支實付防波堤』。未來無論是達文西微創手術、高價標靶藥物，或是精密的人工關節，都由這套系統為您買單，徹底阻絕了高昂醫療自費對您退休老本的侵蝕。<br><br>
             更重要的是，這筆預算並非消費支出。若一生康健平安，這筆高達 ${Math.round(deathBenefit).toLocaleString()} 元的保本金將完好無缺，並透過保單<b>『指定受益人』</b>的特性，免除民法特留分的干擾，精準傳承給您的家族。<br><br>
             將龐大且不確定的醫療支出，轉嫁給確定的保險機制，才是最穩健的財富守護之道。為了守護醫療尊嚴與資產安全，建議及早啟動這份專屬的終身醫療金庫計畫。
         `;
@@ -345,7 +374,6 @@
         document.getElementById('resultBox').style.display = 'block';
     }
 
-    // 初始化下拉選單並預設載入 40 歲
     window.onload = function() {
         updateAgeOptions();
     };
