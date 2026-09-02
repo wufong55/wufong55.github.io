@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>IFA 旅平險動態報價系統</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; color: #333; padding: 20px; line-height: 1.6; margin: 0; }
+        .container { max-width: 950px; margin: auto; background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        h1 { color: #2c3e50; text-align: center; border-bottom: 2px solid #3498db; padding-bottom: 10px; margin-bottom: 25px; font-size: 26px; font-weight: bold;}
+        .form-row { display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }
+        .form-group { flex: 1; min-width: 30%; background: #fdfefe; padding: 15px; border-radius: 8px; border: 1px solid #e5e8e8;}
+        .form-group label { display: block; font-weight: bold; margin-bottom: 8px; color: #2c3e50; font-size: 15px;}
+        select, input { width: 100%; padding: 10px; border: 1px solid #bdc3c7; border-radius: 6px; font-size: 16px; background-color: #fff; box-sizing: border-box;}
+        button.action-btn { background-color: #3498db; color: #fff; padding: 15px; border: none; border-radius: 8px; cursor: pointer; font-size: 18px; width: 100%; font-weight: bold; margin-top: 10px; transition: 0.3s;}
+        button.action-btn:hover { background-color: #2980b9; }
+        button.action-btn:disabled { background-color: #95a5a6; cursor: not-allowed; }
+        .result-box { margin-top: 30px; display: none; background: #ebf5fb; border-left: 6px solid #2980b9; padding: 20px; border-radius: 8px;}
+        .highlight-premium { color: #c0392b; font-weight: 900; font-size: 32px; }
+        .status-bar { text-align: center; font-size: 14px; color: #e67e22; font-weight: bold; margin-bottom: 15px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>✈️ IFA 旅平險動態報價系統</h1>
+    
+    <div id="status_message" class="status-bar">⏳ 正在連線載入遠端費率資料庫...</div>
+
+    <div class="form-row">
+        <div class="form-group">
+            <label>人壽商品組合</label>
+            <select id="plan_select" onchange="updateAmountOptions()">
+                <!-- 下拉選單將由系統動態生成 -->
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>意外身故保額 (萬)</label>
+            <!-- 保額不再寫死，而是根據 JSON 內擁有的級距動態產生 -->
+            <select id="amount_select"></select>
+        </div>
+
+        <div class="form-group">
+            <label>旅遊天數 (1~180天)</label>
+            <input type="number" id="days" value="5" min="1" max="180">
+        </div>
+    </div>
+
+    <button id="calc_btn" class="action-btn" onclick="calculateTravel()" disabled>產出精算報價</button>
+
+    <div id="resultBox" class="result-box">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div id="summaryTitle" style="font-size: 18px; color: #2c3e50; font-weight: bold;"></div>
+            <div style="text-align: right;">
+                <span style="font-size: 16px; color: #7f8c8d;">精確總保費：</span><br>
+                <span class="highlight-premium" id="totalPremium">0</span> <span style="font-size: 18px; color: #2c3e50; font-weight: bold;">元</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 準備一個空物件，用來接收外部 JSON 資料庫
+    let globalRatesDB = {};
+
+    // 系統初始化：利用 Fetch API非同步讀取 rates.json
+    window.onload = async function() {
+        try {
+            const response = await fetch('rates.json');
+            if (!response.ok) throw new Error('Network response was not ok');
+            
+            globalRatesDB = await response.json();
+            
+            document.getElementById('status_message').innerText = "✅ 費率庫載入完成 (Cloud Sync)";
+            document.getElementById('status_message').style.color = "#27ae60";
+            document.getElementById('calc_btn').disabled = false;
+            
+            initPlanOptions();
+            
+        } catch (error) {
+            document.getElementById('status_message').innerText = "🚨 費率庫載入失敗！請確認 rates.json 檔案與伺服器狀態。";
+            document.getElementById('status_message').style.color = "#c0392b";
+            console.error("Error loading rates:", error);
+        }
+    };
+
+    // 將 JSON 內的第一層 Key 自動轉化為險種選單
+    function initPlanOptions() {
+        const planSelect = document.getElementById('plan_select');
+        planSelect.innerHTML = '';
+        
+        // 為了閱讀友善，我們做一個簡單的名稱對照表
+        const planNames = {
+            'sta': 'STA (單獨投保)',
+            'sta_smr': 'STA + SMR (國內優質首選)',
+            'snsota': 'SNSOTA (國外最佳推薦)',
+            'aota': 'AOTA (海外旅平險)',
+            'aota_aat': 'AOTA + AAT (含海外專機)'
+        };
+
+        for (let key in globalRatesDB) {
+            let opt = document.createElement('option');
+            opt.value = key;
+            opt.text = planNames[key] || key.toUpperCase();
+            planSelect.appendChild(opt);
+        }
+        
+        updateAmountOptions();
+    }
+
+    // 根據選擇的險種，去 JSON 裡翻找有建立哪些「保額級距」，動態生成保額選單
+    function updateAmountOptions() {
+        const planKey = document.getElementById('plan_select').value;
+        const amountSelect = document.getElementById('amount_select');
+        amountSelect.innerHTML = '';
+
+        let targetPlanData = globalRatesDB[planKey];
+        if (!targetPlanData) return;
+
+        // 處理 JSON 結構相容性：判斷底下是直接接保額(如 "1000")，還是包了一層年齡(如 "over_15")
+        let amountsObj = targetPlanData;
+        if (targetPlanData['over_15']) {
+            amountsObj = targetPlanData['over_15'];
+        }
+
+        // 取出所有保額級距並排序 (例如 10, 50, 100, 1000)
+        let availableAmounts = Object.keys(amountsObj).map(Number).sort((a, b) => a - b);
+
+        availableAmounts.forEach(amt => {
+            let opt = document.createElement('option');
+            opt.value = amt;
+            // 若數字較小可能是代表「十萬」，這裡可以依您團隊邏輯微調，統一顯示
+            opt.text = `${amt} 萬`;
+            // 預設選擇 1000 萬
+            if (amt === 1000 || amt === 100) opt.selected = true; 
+            amountSelect.appendChild(opt);
+        });
+    }
+
+    // 執行精算：直接去 JSON 物件裡抓取「絕對位置」的數字
+    function calculateTravel() {
+        const planKey = document.getElementById('plan_select').value;
+        const planName = document.getElementById('plan_select').options[document.getElementById('plan_select').selectedIndex].text;
+        const amountKey = document.getElementById('amount_select').value;
+        const days = parseInt(document.getElementById('days').value);
+        
+        let targetPlanData = globalRatesDB[planKey];
+        
+        // 結構相容性處理
+        if (targetPlanData['over_15']) {
+            targetPlanData = targetPlanData['over_15'];
+        }
+
+        let premiumDisplay = "(費率未建置)";
+
+        if (targetPlanData && targetPlanData[amountKey]) {
+            const ratesArray = targetPlanData[amountKey];
+            if (days < ratesArray.length) {
+                premiumDisplay = ratesArray[days].toLocaleString();
+            } else {
+                premiumDisplay = `(尚無 ${days} 天費率)`;
+            }
+        }
+
+        document.getElementById('summaryTitle').innerHTML = `所選組合：${planName} <br><span style="font-size:14px; color:#7f8c8d;">保額 ${amountKey} 萬 | 行程 ${days} 天</span>`;
+        document.getElementById('totalPremium').innerText = premiumDisplay;
+        document.getElementById('resultBox').style.display = 'block';
+    }
+</script>
+
+</body>
+</html>
