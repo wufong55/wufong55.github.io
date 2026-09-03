@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高資產類全委保單 - 視覺化計算模組 (既有客戶升級版)</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; color: #333; }
+        .container { display: flex; flex-wrap: wrap; max-width: 1200px; margin: 0 auto; gap: 20px; }
+        .panel { background: #fff; padding: 25px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); flex: 1; min-width: 300px; }
+        h2 { color: #1e3a8a; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-top: 0; font-size: 1.2rem; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.9rem; color: #475569; }
+        input[type="number"], select { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 5px; box-sizing: border-box; font-size: 1rem; }
+        input[type="radio"] { margin-right: 5px; }
+        .radio-group { display: flex; gap: 15px; margin-bottom: 20px; background: #e2e8f0; padding: 10px; border-radius: 5px; font-weight: bold; }
+        button { background-color: #2563eb; color: white; border: none; padding: 12px 20px; border-radius: 5px; cursor: pointer; font-size: 1rem; font-weight: bold; width: 100%; margin-top: 10px; transition: 0.3s; }
+        button:hover { background-color: #1d4ed8; }
+        .result-box { background: #f8fafc; border-left: 4px solid #3b82f6; padding: 15px; margin-bottom: 15px; border-radius: 4px; }
+        .result-title { font-size: 0.9rem; color: #64748b; margin-bottom: 5px; }
+        .result-value { font-size: 1.5rem; font-weight: bold; color: #0f172a; }
+        .highlight { color: #059669; }
+        .warning { color: #dc2626; font-size: 0.85rem; margin-top: 5px; }
+        .info-text { color: #64748b; font-size: 0.85rem; margin-top: 5px; }
+        .tabs { display: flex; margin-bottom: 15px; border-radius: 5px; overflow: hidden; flex-wrap: wrap; }
+        .tab { flex: 1 1 25%; text-align: center; padding: 12px 5px; background: #e2e8f0; cursor: pointer; font-weight: bold; font-size: 0.85rem; transition: 0.3s; }
+        .tab.active { background: #2563eb; color: #fff; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        hr { border: 0; border-top: 1px dashed #cbd5e1; margin: 20px 0; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- 左側：顧問輸入區 -->
+    <div class="panel">
+        <h2>⚙️ 投資型保單試算 (Input Dashboard)</h2>
+        
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('tab-init', this)">1. 建立帳戶狀態</div>
+            <div class="tab" onclick="switchTab('tab-redeem', this)">2. 中途贖回</div>
+            <div class="tab" onclick="switchTab('tab-topup', this)">3. 增額投入</div>
+            <div class="tab" onclick="switchTab('tab-bonus', this)">4. 加值給付</div>
+        </div>
+
+        <!-- Tab 1: 建立帳戶狀態 -->
+        <div id="tab-init" class="tab-content active">
+            
+            <div class="form-group">
+                <label for="currency">幣別設定</label>
+                <select id="currency" onchange="checkInitLock()">
+                    <option value="TWD">BVA2 新臺幣 (TWD)</option>
+                    <option value="USD">UBVA2 美元 (USD)</option>
+                </select>
+            </div>
+
+            <!-- 模式切換 -->
+            <div class="radio-group">
+                <label><input type="radio" name="init-mode" value="new" checked onchange="toggleInitMode()"> 🆕 模擬新契約投入</label>
+                <label><input type="radio" name="init-mode" value="existing" onchange="toggleInitMode()"> 📂 匯入既有保單狀態</label>
+            </div>
+
+            <!-- 新契約輸入區 -->
+            <div id="mode-new">
+                <div class="form-group"><label for="premium">目標保費投入金額</label><input type="number" id="premium" value="3000000" step="100000" oninput="checkInitLock()"></div>
+                <div class="form-group"><label for="nav-init">預設進場淨值 (NAV)</label><input type="number" id="nav-init" value="10.00" step="0.01"></div>
+                <div class="form-group">
+                    <label for="clientType">客戶屬性 (影響保費費用率)</label>
+                    <select id="clientType">
+                        <option value="3.0">一般客戶 (未滿額預設 3.0%)</option>
+                        <option value="2.8">有效契約客戶 (未滿額預設 2.8%)</option>
+                        <option value="2.7">滿期金客戶 (一律 2.7%)</option>
+                    </select>
+                    <div id="fee-notice-init" class="info-text">📌 系統將依據保費規模與客戶屬性自動判定適用費率。</div>
+                </div>
+            </div>
+
+            <!-- 既有保單輸入區 -->
+            <div id="mode-existing" style="display: none;">
+                <div class="info-text" style="margin-bottom: 10px; color:#059669;">✔️ 請直接查看客戶最新對帳單並輸入以下數值：</div>
+                <div class="form-group"><label for="exist-units">目前累積總單位數</label><input type="number" id="exist-units" value="291900" step="100"></div>
+                <div class="form-group"><label for="exist-nav">目前參考淨值 (NAV)</label><input type="number" id="exist-nav" value="9.85" step="0.01"></div>
+                <div class="form-group">
+                    <label for="exist-history-premium">歷史累計已繳保費 (毛額)</label>
+                    <input type="number" id="exist-history-premium" value="3000000" step="100000">
+                    <div class="info-text">⚠️ 此數值用於判定未來「增額」時，是否已達大額費率減免門檻 (TWD200萬/USD6.6萬)。</div>
+                </div>
+            </div>
+
+            <button onclick="calculateInit()">建立帳戶 / 更新狀態</button>
+        </div>
+
+        <!-- Tab 2: 中途贖回 -->
+        <div id="tab-redeem" class="tab-content">
+            <div class="form-group"><label for="redeem-amount">欲提領/贖回金額 (毛額)</label><input type="number" id="redeem-amount" value="500000" step="10000"></div>
+            <div class="form-group"><label for="nav-redeem">贖回當下淨值 (NAV)</label><input type="number" id="nav-redeem" value="9.50" step="0.01"></div>
+            <div class="form-group"><label for="policy-year">保單年度 (影響解約費用率)</label><select id="policy-year"><option value="6">第1年 (扣6%)</option><option value="5">第2年 (扣5%)</option><option value="4">第3年 (扣4%)</option><option value="3">第4年 (扣3%)</option><option value="2">第5年 (扣2%)</option><option value="1">第6年 (扣1%)</option><option value="0">第7年及以後 (扣0%)</option></select></div>
+            <div class="form-group"><label for="free-withdraw">是否超過該年度 4 次免費提領次數？</label><select id="free-withdraw"><option value="no">否 (4次以內免手續費)</option><option value="yes">是 (加扣 TWD1,000 或 USD30)</option></select></div>
+            <button onclick="calculateRedeem()" style="background-color: #dc2626;">執行贖回試算</button>
+        </div>
+
+        <!-- Tab 3: 增額投入 -->
+        <div id="tab-topup" class="tab-content">
+            <div class="form-group"><label for="topup-amount">增額保費金額</label><input type="number" id="topup-amount" value="1000000" step="10000"></div>
+            <div class="form-group"><label for="nav-topup">增額當下淨值 (NAV)</label><input type="number" id="nav-topup" value="10.50" step="0.01"></div>
+            <button onclick="calculateTopup()" style="background-color: #059669;">執行增額試算</button>
+        </div>
+
+        <!-- Tab 4: 加值給付 -->
+        <div id="tab-bonus" class="tab-content">
+            <div class="form-group">
+                <label for="avg-account-value">過去 12 個月平均帳戶價值估算</label>
+                <input type="number" id="avg-account-value" value="0" step="10000">
+                <div class="info-text">提示：已自動帶入當前帳戶總價值作為粗估參考，可手動微調。</div>
+            </div>
+            <div class="form-group"><label for="nav-bonus">資產評價日當下淨值 (NAV)</label><input type="number" id="nav-bonus" value="10.00" step="0.01"></div>
+            <button onclick="calculateBonus()" style="background-color: #9333ea;">領取並轉換加值給付</button>
+        </div>
+    </div>
+
+    <!-- 右側：客戶展示區 -->
+    <div class="panel">
+        <h2>📊 資金水庫狀態 (Client Output)</h2>
+        <div class="result-box"><div class="result-title">💧 當前總單位數 (Total Units)</div><div class="result-value highlight" id="out-total-units">0.00</div></div>
+        <div class="result-box"><div class="result-title">💰 帳戶總價值估算 (依最新淨值)</div><div class="result-value" id="out-account-value">0</div><div class="info-text" id="out-nav-current">最新參考淨值：--</div></div>
+        <div class="result-box"><div class="result-title">💸 預估每月撥息金額 (農田灌溉流)</div><div class="result-value highlight" id="out-payout">0</div><div class="info-text" id="out-payout-rate">依據最新淨值之撥回標準：--</div></div>
+        <hr>
+        <h2 style="font-size: 1rem; color: #475569;">🧾 單筆交易明細 (Transaction Details)</h2>
+        <div id="transaction-log" style="font-size: 0.9rem; line-height: 1.6; color: #333; background: #f1f5f9; padding: 15px; border-radius: 5px;">請先於左側建立帳戶，此處將顯示詳細金流變化。</div>
+    </div>
+</div>
+
+<script>
+    let globalData = { units: 0, currency: 'TWD', currencySymbol: 'NT$ ', totalPremiumPaid: 0, clientTypeRate: 0.03, currentAccountValue: 0 };
+
+    function switchTab(tabId, element) {
+        document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        element.classList.add('active');
+        document.getElementById(tabId).classList.add('active');
+        if (tabId === 'tab-bonus') { document.getElementById('avg-account-value').value = Math.round(globalData.currentAccountValue); }
+    }
+
+    function toggleInitMode() {
+        const mode = document.querySelector('input[name="init-mode"]:checked').value;
+        document.getElementById('mode-new').style.display = (mode === 'new') ? 'block' : 'none';
+        document.getElementById('mode-existing').style.display = (mode === 'existing') ? 'block' : 'none';
+    }
+
+    function checkInitLock() {
+        const currency = document.getElementById('currency').value;
+        const premium = parseFloat(document.getElementById('premium').value) || 0;
+        const isLargeAmount = (currency === 'TWD' && premium >= 2000000) || (currency === 'USD' && premium >= 66000);
+        const clientSelect = document.getElementById('clientType');
+        const feeNotice = document.getElementById('fee-notice-init');
+        
+        if (isLargeAmount) {
+            clientSelect.disabled = true;
+            feeNotice.innerHTML = "🔒 <strong>達大額保費門檻，系統已自動鎖定享最優 2.7% 費率！</strong>";
+            feeNotice.style.color = "#dc2626";
+        } else {
+            clientSelect.disabled = false;
+            feeNotice.innerHTML = "📌 未達大額門檻，依客戶屬性套用對應費率 (2.7%~3.0%)。";
+            feeNotice.style.color = "#64748b";
+        }
+    }
+
+    function getPayoutRate(nav) {
+        if (nav >= 9.00) return 0.042;
+        if (nav >= 8.00) return 0.036;
+        return 0;
+    }
+
+    function updateDashboard(nav, logHTML) {
+        globalData.currentAccountValue = globalData.units * nav;
+        document.getElementById('out-total-units').innerText = globalData.units.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        document.getElementById('out-account-value').innerText = globalData.currencySymbol + globalData.currentAccountValue.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+        document.getElementById('out-nav-current').innerText = "最新參考淨值：" + nav;
+        const payoutRate = getPayoutRate(nav);
+        document.getElementById('out-payout').innerText = globalData.currencySymbol + (globalData.units * payoutRate).toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+        document.getElementById('out-payout-rate').innerText = payoutRate > 0 ? "每單位撥回：" + payoutRate : "低於8元不撥回";
+        document.getElementById('transaction-log').innerHTML = logHTML;
+    }
+
+    function calculateInit() {
+        globalData.currency = document.getElementById('currency').value;
+        globalData.currencySymbol = (globalData.currency === 'TWD') ? 'NT$ ' : 'US$ ';
+        const mode = document.querySelector('input[name="init-mode"]:checked').value;
+        let nav, log;
+
+        if (mode === 'new') {
+            const premium = parseFloat(document.getElementById('premium').value);
+            nav = parseFloat(document.getElementById('nav-init').value);
+            globalData.clientTypeRate = parseFloat(document.getElementById('clientType').value) / 100;
+            let feeRate = globalData.clientTypeRate;
+            if ((globalData.currency === 'TWD' && premium >= 2000000) || (globalData.currency === 'USD' && premium >= 66000)) feeRate = 0.027;
+            
+            const netPremium = premium * (1 - feeRate);
+            globalData.units = netPremium / nav;
+            globalData.totalPremiumPaid = premium;
+            log = `<strong>【首期建倉】</strong><br>總投入保費：${globalData.currencySymbol}${premium.toLocaleString()}<br>扣除費率：${(feeRate * 100).toFixed(1)}%<br>轉換單位數：${globalData.units.toLocaleString('en-US', {maximumFractionDigits: 2})} 單位 (進場淨值 ${nav})`;
+        } else {
+            const units = parseFloat(document.getElementById('exist-units').value);
+            nav = parseFloat(document.getElementById('exist-nav').value);
+            const historyPremium = parseFloat(document.getElementById('exist-history-premium').value);
+            
+            globalData.units = units;
+            globalData.totalPremiumPaid = historyPremium;
+            log = `<strong>【📂 既有保單資料匯入】</strong><br>匯入單位數：${units.toLocaleString('en-US', {maximumFractionDigits: 2})} 單位<br>當前參考淨值：${nav}<br>歷史累計繳費：${globalData.currencySymbol}${historyPremium.toLocaleString()}`;
+        }
+        updateDashboard(nav, log);
+    }
+    
+    function calculateRedeem() {
+        if(globalData.units <= 0) { alert("請先建立帳戶狀態！"); return; }
+        const redeemAmt = parseFloat(document.getElementById('redeem-amount').value);
+        const nav = parseFloat(document.getElementById('nav-redeem').value);
+        const surrenderRate = parseFloat(document.getElementById('policy-year').value) / 100;
+        const deductUnits = redeemAmt / nav;
+        const isExceedFree = document.getElementById('free-withdraw').value === 'yes';
+        const flatFee = isExceedFree ? (globalData.currency === 'TWD' ? 1000 : 30) : 0;
+        const netCash = redeemAmt - (redeemAmt * surrenderRate) - flatFee;
+
+        if(deductUnits > globalData.units) { alert("單位數不足，無法贖回！"); return; }
+        globalData.units -= deductUnits;
+        const log = `<strong>【部分贖回 / 提現】</strong><br>扣減單位數：${deductUnits.toLocaleString('en-US', {maximumFractionDigits: 2})} 單位 (贖回淨值 ${nav})<br>解約費用率：${(surrenderRate * 100)}%<br><span style="color:#dc2626; font-weight:bold;">客戶實際入帳：${globalData.currencySymbol}${netCash.toLocaleString()}</span>`;
+        updateDashboard(nav, log);
+    }
+
+    function calculateTopup() {
+        if(globalData.units <= 0) { alert("請先建立帳戶狀態！"); return; }
+        const topupAmt = parseFloat(document.getElementById('topup-amount').value);
+        const nav = parseFloat(document.getElementById('nav-topup').value);
+        
+        globalData.totalPremiumPaid += topupAmt;
+        let feeRate = globalData.clientTypeRate;
+        if ((globalData.currency === 'TWD' && globalData.totalPremiumPaid >= 2000000) || (globalData.currency === 'USD' && globalData.totalPremiumPaid >= 66000)) {
+            feeRate = 0.027; // 跨越門檻，適用最優費率
+        }
+
+        const netTopup = topupAmt * (1 - feeRate); 
+        const addUnits = netTopup / nav;
+        globalData.units += addUnits;
+        
+        const log = `<strong>【增額投入】</strong><br>增額保費：${globalData.currencySymbol}${topupAmt.toLocaleString()} (適用費率 ${(feeRate*100).toFixed(1)}%)<br>淨投入金額：${globalData.currencySymbol}${netTopup.toLocaleString()}<br><span style="color:#059669;">新增單位數：${addUnits.toLocaleString('en-US', {maximumFractionDigits: 2})} 單位</span>`;
+        updateDashboard(nav, log);
+    }
+
+    function calculateBonus() {
+        if(globalData.units <= 0) { alert("請先建立帳戶狀態！"); return; }
+        const avgValue = parseFloat(document.getElementById('avg-account-value').value);
+        const nav = parseFloat(document.getElementById('nav-bonus').value);
+        const bonusCashAmount = avgValue * 0.005; 
+        const addUnits = bonusCashAmount / nav;
+        globalData.units += addUnits;
+        const log = `<strong>【🎁 第 7 年起：加值給付發放】</strong><br>給付金額 (經理費回饋)：${globalData.currencySymbol}${bonusCashAmount.toLocaleString()} (以 0.5% 計算)<br><span style="color:#9333ea; font-weight:bold;">自動轉入單位數：+${addUnits.toLocaleString('en-US', {maximumFractionDigits: 2})} 單位 (購入淨值 ${nav})</span>`;
+        updateDashboard(nav, log);
+    }
+
+    window.onload = checkInitLock;
+</script>
+</body>
+</html>
