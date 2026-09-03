@@ -1,6 +1,4 @@
-import os
-
-html_content = """<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
@@ -137,12 +135,14 @@ html_content = """<!DOCTYPE html>
     let globalRatesDB = {};
 
     const productNameMapping = {
-        'sta_smr': '安心旅行平安保險 (STA+SMR)',
-        'sta_smr_nsohs': '安心旅平險+海外突發疾病 (STA+SMR+NSOHS)',
+        'sta': '安心旅行平安保險 (STA)',
+        'sta_smr': '安心旅平險+傷害醫療 (STA+SMR)',
+        'sta_smr_nsohs': '安心旅平險+海外突發疾病 (STA+SMR+NSOHS/SNSOTA)',
         'aota': '安心HIGH玩海外旅平險 (AOTA)',
         'aota_aat': '安心HIGH玩 + 醫療專機 (AOTA+AAT)',
         'akms': '陪童HIGH玩特定醫療旅平險 (AKMS)',
         'akms_aat': '陪童HIGH玩 + 醫療專機 (AKMS+AAT)',
+        'kmr': '陪童旅行傷害醫療 (KMR)',
         'kmr_nsohs': '陪童旅行傷害醫療 + 海外突發疾病 (KMR+NSOHS)'
     };
 
@@ -152,18 +152,20 @@ html_content = """<!DOCTYPE html>
         'p3': '計畫三 (保額500萬)',
         'p4': '計畫四 (保額300萬)',
         'p5': '計畫五 (喪葬69萬)',
-        'p6': '計畫六(童遊)',
+        'p6': '計畫六 (童遊)',
         'xiaoA': '小三通計畫A',
-        'xiaoB': '小三通計畫B(童遊)'
+        'xiaoB': '小三通計畫B (童遊)'
     };
 
     const coverageDetails = {
+        'sta': ['意外身故或喪葬費用保險金', '意外失能保險金'],
         'sta_smr': ['意外身故或喪葬費用保險金', '意外失能保險金', '傷害醫療保險金 (實支實付)'],
-        'sta_smr_nsohs': ['意外身故或喪葬費用保險金', '意外失能保險金', '傷害醫療保險金', '海外突發疾病住院醫療保險金', '海外突發疾病門診/急診醫療保險金', '海外突發疾病返國住院醫療保險金'],
+        'sta_smr_nsohs': ['意外身故或喪葬費用保險金', '意外失能保險金', '傷害醫療保險金', '海外突發疾病住院/門診/急診/返國住院醫療保險金'],
         'aota': ['意外身故或喪葬費用保險金', '意外失能保險金', '航空/水陸大眾運輸意外身故及失能保險金', '意外嚴重第三度燒燙傷慰問保險金', '意外傷害醫療保險金', '海外突發疾病住院/門診/急診/返國住院醫療保險金'],
         'aota_aat': ['包含 AOTA (安心HIGH玩) 所有保障', '附加海外醫療專機運送服務 (AAT)'],
         'akms': ['意外嚴重第三度燒燙傷慰問保險金', '意外傷害醫療保險金', '海外突發疾病住院/門診/急診/返國住院醫療保險金', '*(無提供意外身故或喪葬費用保險金)'],
         'akms_aat': ['包含 AKMS (陪童HIGH玩) 所有保障', '附加海外醫療專機運送服務 (AAT)'],
+        'kmr': ['意外傷害醫療保險金', '*(無提供意外身故或喪葬費用保險金)'],
         'kmr_nsohs': ['意外傷害醫療保險金', '海外突發疾病住院/門診/急診/返國住院醫療保險金', '*(無提供意外身故或喪葬費用保險金)'],
         'pro6': {
             'p1': ['意外身故及失能 2,000萬', '傷害/海外突發疾病醫療 100萬', '旅遊不便險 (旅程取消/更改、班機延誤等)', '緊急救援服務 300萬'],
@@ -184,7 +186,7 @@ html_content = """<!DOCTYPE html>
             
             globalRatesDB = await response.json();
             
-            document.getElementById('status_message').innerText = "✅ 費率庫載入完成 (Cloud Sync)";
+            document.getElementById('status_message').innerText = "✅ 費率庫載入完成";
             document.getElementById('status_message').style.color = "#27ae60";
             document.getElementById('calc_btn_life').disabled = false;
             document.getElementById('calc_btn_gen').disabled = false;
@@ -206,6 +208,12 @@ html_content = """<!DOCTYPE html>
         document.getElementById('tab_' + tabId).classList.add('active');
         document.getElementById('btn_' + tabId).classList.add('active');
         document.getElementById('resultBox').style.display = 'none';
+        
+        if(tabId === 'life') {
+            updateLifeProducts();
+        } else {
+            updateGenPlans();
+        }
     }
 
     function updateLifeProducts() {
@@ -215,23 +223,30 @@ html_content = """<!DOCTYPE html>
         productSelect.innerHTML = '';
 
         let availableProducts = [];
+        
+        const allAgeProducts = ['sta', 'sta_smr', 'sta_smr_nsohs'];
+        const over15Products = ['aota', 'aota_aat'];
+        const under15Products = ['kmr', 'kmr_nsohs', 'akms', 'akms_aat'];
+
         if (isDomestic) {
-            availableProducts = ['sta_smr'];
+            if (ageGroup === 'over_15') {
+                availableProducts = ['sta', 'sta_smr'];
+            } else {
+                availableProducts = ['sta', 'sta_smr', 'kmr'];
+            }
         } else {
             if (ageGroup === 'over_15') {
-                availableProducts = ['sta_smr_nsohs', 'aota', 'aota_aat'];
+                availableProducts = [...allAgeProducts, ...over15Products];
             } else {
-                availableProducts = ['aota', 'aota_aat', 'akms', 'akms_aat', 'kmr_nsohs'];
+                availableProducts = [...allAgeProducts, ...under15Products];
             }
         }
 
         availableProducts.forEach(p => {
-            if (globalRatesDB[p] && globalRatesDB[p][ageGroup] && Object.keys(globalRatesDB[p][ageGroup]).length > 0) {
-                let opt = document.createElement('option');
-                opt.value = p;
-                opt.text = productNameMapping[p] || p;
-                productSelect.appendChild(opt);
-            }
+            let opt = document.createElement('option');
+            opt.value = p;
+            opt.text = productNameMapping[p] || p;
+            productSelect.appendChild(opt);
         });
         updateLifeAmounts();
     }
@@ -242,15 +257,37 @@ html_content = """<!DOCTYPE html>
         const amountSelect = document.getElementById('life_amount');
         amountSelect.innerHTML = '';
 
-        if (product && globalRatesDB[product] && globalRatesDB[product][ageGroup]) {
-            const amounts = Object.keys(globalRatesDB[product][ageGroup]).map(Number).sort((a,b) => a-b);
+        if (!product || !globalRatesDB[product]) {
+            let opt = document.createElement('option');
+            opt.value = "";
+            opt.text = "尚無費率資料";
+            amountSelect.appendChild(opt);
+            return;
+        }
+
+        let targetData = globalRatesDB[product];
+        
+        // 判斷是否為區分年齡的險種，如果 JSON 內有 over_15 或 under_15 則進入下一層
+        if (targetData['over_15'] !== undefined || targetData['under_15'] !== undefined) {
+            targetData = targetData[ageGroup];
+        }
+
+        if (targetData && Object.keys(targetData).length > 0) {
+            const amounts = Object.keys(targetData).map(Number).sort((a,b) => a-b);
             amounts.forEach(amt => {
-                let opt = document.createElement('option');
-                opt.value = amt;
-                opt.text = amt + ' 萬';
-                if (amt === 1000 || amt === 100 || amt === 20) opt.selected = true;
-                amountSelect.appendChild(opt);
+                if (!isNaN(amt)) {
+                    let opt = document.createElement('option');
+                    opt.value = amt;
+                    opt.text = amt + ' 萬';
+                    if (amt === 1000 || amt === 100 || amt === 20) opt.selected = true;
+                    amountSelect.appendChild(opt);
+                }
             });
+        } else {
+            let opt = document.createElement('option');
+            opt.value = "";
+            opt.text = "尚無費率資料";
+            amountSelect.appendChild(opt);
         }
     }
 
@@ -269,6 +306,11 @@ html_content = """<!DOCTYPE html>
                 opt.text = pro6PlanNameMapping[plan] || plan;
                 planSelect.appendChild(opt);
             });
+        } else {
+            let opt = document.createElement('option');
+            opt.value = "";
+            opt.text = "無法載入計畫";
+            planSelect.appendChild(opt);
         }
     }
 
@@ -294,21 +336,31 @@ html_content = """<!DOCTYPE html>
         const amount = document.getElementById('life_amount').value;
         const days = parseInt(document.getElementById('life_days').value);
 
+        if (!amount) {
+            alert('此選項目前無保額可供試算 (尚未建置費率)');
+            return;
+        }
+
         if (!days || days < 1 || days > 180) {
             alert('天數請輸入 1~180 之間');
             return;
         }
 
         try {
-            const premium = globalRatesDB[product][ageGroup][amount][days];
+            let targetData = globalRatesDB[product];
+            if (targetData['over_15'] !== undefined || targetData['under_15'] !== undefined) {
+                targetData = targetData[ageGroup];
+            }
+            
+            const premium = targetData[amount][days];
             if (premium === undefined || premium === 0) {
                 alert(`查無 ${days} 天的保費資料`);
                 return;
             }
             const titleHtml = `南山人壽：${productName}<br><span style="font-size:14px; color:#7f8c8d;">保額 ${amount} 萬 | 行程 ${days} 天</span>`;
-            renderResult(titleHtml, premium, coverageDetails[product]);
+            renderResult(titleHtml, premium, coverageDetails[product] || []);
         } catch (e) {
-            alert('無法計算保費，請確認選項。');
+            alert('無法計算保費，請確認該年齡與險種的費率表是否已齊全。');
         }
     }
 
@@ -318,6 +370,11 @@ html_content = """<!DOCTYPE html>
         const plan = document.getElementById('gen_plan').value;
         const planName = document.getElementById('gen_plan').options[document.getElementById('gen_plan').selectedIndex].text;
         const days = parseInt(document.getElementById('gen_days').value);
+
+        if (!plan) {
+            alert('無可用計畫');
+            return;
+        }
 
         if (!days || days < 1 || days > 20) {
             alert('金平安PRO6 天數最高為 20 天');
@@ -331,7 +388,7 @@ html_content = """<!DOCTYPE html>
                 return;
             }
             const titleHtml = `南山產物：金平安 PRO 6 專案<br><span style="font-size:14px; color:#7f8c8d;">${planName} | 行程 ${days} 天</span>`;
-            renderResult(titleHtml, premium, coverageDetails['pro6'][plan]);
+            renderResult(titleHtml, premium, coverageDetails['pro6'][plan] || []);
         } catch (e) {
             alert('無法計算保費，請確認選項。');
         }
@@ -340,8 +397,3 @@ html_content = """<!DOCTYPE html>
 
 </body>
 </html>
-"""
-
-path = r'C:\Users\yabon\Desktop\0902\insurance_module.html'
-with open(path, 'w', encoding='utf-8') as f:
-    f.write(html_content)
