@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>旅平險動態報價模組</title>
+    <title>旅平險動態報價模組 v2</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; color: #333; padding: 20px; line-height: 1.6; margin: 0; }
         .container { max-width: 950px; margin: auto; background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
@@ -41,7 +41,7 @@
 <body>
 
 <div class="container">
-    <h1>✈️ 旅平險動態報價模組</h1>
+    <h1>✈️ 旅平險動態報價模組 v2</h1>
     
     <div id="status_message" class="status-bar">⏳ 正在連線載入遠端費率資料庫...</div>
 
@@ -56,14 +56,15 @@
             <div class="form-group">
                 <label>國內 / 海外</label>
                 <select id="life_dest" onchange="updateLifeProducts()">
+                    <!-- 預設為海外，以便顯示更多險種 -->
+                    <option value="overseas" selected>海外</option>
                     <option value="domestic">國內</option>
-                    <option value="overseas">海外</option>
                 </select>
             </div>
             <div class="form-group">
                 <label>年齡</label>
                 <select id="life_age" onchange="updateLifeProducts()">
-                    <option value="over_15">滿 15 足歲</option>
+                    <option value="over_15" selected>滿 15 足歲</option>
                     <option value="under_15">未滿 15 足歲</option>
                 </select>
             </div>
@@ -181,7 +182,9 @@
 
     window.onload = async function() {
         try {
-            const response = await fetch('rates.json');
+            // 加入 cache-buster (?t=timestamp) 強制瀏覽器讀取最新的 rates.json
+            const url = 'rates.json?t=' + new Date().getTime();
+            const response = await fetch(url);
             if (!response.ok) throw new Error('Network response was not ok');
             
             globalRatesDB = await response.json();
@@ -267,7 +270,7 @@
 
         let targetData = globalRatesDB[product];
         
-        // 判斷是否為區分年齡的險種，如果 JSON 內有 over_15 或 under_15 則進入下一層
+        // 如果這個險種有區分 over_15 / under_15，則進入下一層
         if (targetData['over_15'] !== undefined || targetData['under_15'] !== undefined) {
             targetData = targetData[ageGroup];
         }
@@ -279,6 +282,7 @@
                     let opt = document.createElement('option');
                     opt.value = amt;
                     opt.text = amt + ' 萬';
+                    // 根據常見保額自動預選
                     if (amt === 1000 || amt === 100 || amt === 20) opt.selected = true;
                     amountSelect.appendChild(opt);
                 }
@@ -296,20 +300,28 @@
         const planSelect = document.getElementById('gen_plan');
         planSelect.innerHTML = '';
 
+        // pro6 的資料結構在 JSON 中是用 adult 和 child 做 key
         const pro6Group = ageGroup === 'under_15' ? 'child' : 'adult';
 
         if (globalRatesDB['pro6'] && globalRatesDB['pro6'][pro6Group]) {
             const plans = Object.keys(globalRatesDB['pro6'][pro6Group]);
-            plans.forEach(plan => {
+            if (plans.length > 0) {
+                plans.forEach(plan => {
+                    let opt = document.createElement('option');
+                    opt.value = plan;
+                    opt.text = pro6PlanNameMapping[plan] || plan;
+                    planSelect.appendChild(opt);
+                });
+            } else {
                 let opt = document.createElement('option');
-                opt.value = plan;
-                opt.text = pro6PlanNameMapping[plan] || plan;
+                opt.value = "";
+                opt.text = "該年齡層無計畫資料";
                 planSelect.appendChild(opt);
-            });
+            }
         } else {
             let opt = document.createElement('option');
             opt.value = "";
-            opt.text = "無法載入計畫";
+            opt.text = "無法載入 PRO6 計畫 (請確認 JSON 內有 pro6 結構)";
             planSelect.appendChild(opt);
         }
     }
@@ -348,6 +360,7 @@
 
         try {
             let targetData = globalRatesDB[product];
+            // 判斷是否需要依照年齡層進去抓資料 (STA, STA+SMR 等全年齡險種會跳過這個 if)
             if (targetData['over_15'] !== undefined || targetData['under_15'] !== undefined) {
                 targetData = targetData[ageGroup];
             }
@@ -360,6 +373,7 @@
             const titleHtml = `南山人壽：${productName}<br><span style="font-size:14px; color:#7f8c8d;">保額 ${amount} 萬 | 行程 ${days} 天</span>`;
             renderResult(titleHtml, premium, coverageDetails[product] || []);
         } catch (e) {
+            console.error(e);
             alert('無法計算保費，請確認該年齡與險種的費率表是否已齊全。');
         }
     }
@@ -368,11 +382,11 @@
         const ageGroup = document.getElementById('gen_age').value;
         const pro6Group = ageGroup === 'under_15' ? 'child' : 'adult';
         const plan = document.getElementById('gen_plan').value;
-        const planName = document.getElementById('gen_plan').options[document.getElementById('gen_plan').selectedIndex].text;
+        const planName = document.getElementById('gen_plan').options[document.getElementById('gen_plan').selectedIndex]?.text || '';
         const days = parseInt(document.getElementById('gen_days').value);
 
         if (!plan) {
-            alert('無可用計畫');
+            alert('目前無可用計畫，請確認 JSON 資料。');
             return;
         }
 
@@ -390,6 +404,7 @@
             const titleHtml = `南山產物：金平安 PRO 6 專案<br><span style="font-size:14px; color:#7f8c8d;">${planName} | 行程 ${days} 天</span>`;
             renderResult(titleHtml, premium, coverageDetails['pro6'][plan] || []);
         } catch (e) {
+            console.error(e);
             alert('無法計算保費，請確認選項。');
         }
     }
