@@ -16,6 +16,8 @@
         button:hover { background-color: #138d75; }
         .btn-print { background-color: #2980b9; margin-top: 20px; }
         .btn-print:hover { background-color: #2471a3; }
+        .btn-rules { background-color: #8e44ad; margin-top: 15px; }
+        .btn-rules:hover { background-color: #732d91; }
         
         .result-box { margin-top: 30px; display: none; }
         
@@ -68,10 +70,11 @@
             .btn-upgrade { width: 100%; text-align: center; }
         }
         @media print {
-            button, select, label, .form-row, .upgrade-alert { display: none !important; }
+            button, select, label, .form-row, .upgrade-alert, .btn-rules { display: none !important; }
             .tsunami-alert, .cross-analysis { page-break-inside: avoid; }
             .cross-analysis { break-before: page; page-break-before: always; }
             .closing-script { page-break-inside: avoid; border: none; padding: 0; margin-top: 20px; border-left: 5px solid #2c3e50; padding-left: 15px;}
+            #rulesSection { display: block !important; border: none !important; box-shadow: none !important; margin-top: 30px; page-break-before: always;}
         }
     </style>
 </head>
@@ -146,13 +149,105 @@
         </div>
 
         <button class="btn-print" onclick="window.print()">🖨️ 儲存為 PDF / 列印專屬報告</button>
+        
+        <!-- 新增：跳至投保規則功能 -->
+        <button class="btn-rules" onclick="toggleRules()">📄 點選查看：現行實支實付投保規則 (依最新規範)</button>
+
+        <div id="rulesSection" style="display: none; background: #fff; border: 2px solid #8e44ad; border-radius: 8px; padding: 25px; margin-top: 25px; box-shadow: 0 4px 10px rgba(0,0,0,0.08);">
+            <h3 style="color: #8e44ad; margin-top: 0; text-align: center; border-bottom: 2px dashed #8e44ad; padding-bottom: 15px; font-size: 22px;">📋 現行實支實付投保規則摘要</h3>
+            
+            <div style="margin-bottom: 20px; padding-top: 10px;">
+                <h4 style="color: #2980b9; font-size: 19px; margin-bottom: 12px;">📌 1. 【WEHS 實健溢百】投保規範 (現行 115/04/10起)</h4>
+                <ul style="font-size: 16px; line-height: 1.8; color: #333;">
+                    <li><strong>已投保南山人壽 1HSCO、EWHS、WHS 者：</strong>
+                        <ul>
+                            <li><strong>1HSCO</strong> (限 115.03.27 前購買/加保)：可投保 <strong>計畫10、計畫20</strong>。</li>
+                            <li><strong>EWHS、WHS</strong>：僅可投保 <strong>計畫10</strong>。</li>
+                        </ul>
+                    </li>
+                    <li style="margin-top: 8px;"><strong>未投保上述商品者，依同業「遞延或終身實支實付」保單(75/76歲以後)張數檢核：</strong>
+                        <ul>
+                            <li><strong>0 張</strong>：可投保 WEHS (限一張)。</li>
+                            <li><strong>1 張 (依同業生效日區分)</strong>：
+                                <ul>
+                                    <li>113/07/01(含)以後生效：可投保 WEHS (限一張)。</li>
+                                    <li>113/07/01(不含)以前生效：僅可投保 <strong>計畫10</strong> (限一張)。</li>
+                                </ul>
+                            </li>
+                            <li><strong>2 張(含)以上</strong>：無法投保 WEHS。</li>
+                        </ul>
+                    </li>
+                    <li style="color: #d35400; font-weight: bold; margin-top: 8px;">※ WEHS 免計入日額核保。</li>
+                </ul>
+            </div>
+
+            <div style="margin-bottom: 20px; border-top: 1px solid #eee; padding-top: 20px;">
+                <h4 style="color: #2980b9; font-size: 19px; margin-bottom: 12px;">📌 2. 【1HSCO 更約 WEHS】作業規範 (現行 115/4/25起)</h4>
+                <ul style="font-size: 16px; line-height: 1.8; color: #333;">
+                    <li><strong>適用對象：</strong>投保 115/3/27(含) 以前生效之 1HSCO 保戶，且有高齡實支實付需求者。</li>
+                    <li><strong>投保計畫：</strong>可更約為 <strong>計畫10、計畫20</strong> (不開放計畫30)。</li>
+                    <li><strong>承保條件：</strong><strong style="color: #c0392b;">免檢具健康證明文件</strong> (沿用原承保狀況)，更約年齡最高不超過 70 歲(或承保等級)。</li>
+                    <li><strong>保障銜接：</strong>WEHS 生效日起，原 1HSCO 自動終止。</li>
+                </ul>
+            </div>
+
+            <div style="margin-bottom: 20px; border-top: 1px solid #eee; padding-top: 20px;">
+                <h4 style="color: #2980b9; font-size: 19px; margin-bottom: 15px;">📌 3. 【南山 1HS / 1HSD】投保規範 (現行 114/6/21起)</h4>
+                <table style="width: 100%; border-collapse: collapse; font-size: 16px; text-align: center; margin-bottom: 10px;">
+                    <tr style="background-color: #ecf0f1; border-bottom: 2px solid #bdc3c7;">
+                        <th style="padding: 12px; border: 1px solid #bdc3c7;">南山實支</th>
+                        <th style="padding: 12px; border: 1px solid #bdc3c7;">同業投保情形</th>
+                        <th style="padding: 12px; border: 1px solid #bdc3c7;">1HS</th>
+                        <th style="padding: 12px; border: 1px solid #bdc3c7;">1HSD</th>
+                    </tr>
+                    <tr>
+                        <td rowspan="2" style="padding: 12px; border: 1px solid #bdc3c7;"><strong>有</strong>南山實支</td>
+                        <td style="padding: 12px; border: 1px solid #bdc3c7;">有同業HS</td>
+                        <td style="padding: 12px; border: 1px solid #bdc3c7; color: #c0392b;">X</td>
+                        <td style="padding: 12px; border: 1px solid #bdc3c7; color: #c0392b;">X</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 12px; border: 1px solid #bdc3c7;">無同業HS</td>
+                        <td style="padding: 12px; border: 1px solid #bdc3c7; color: #c0392b;">X</td>
+                        <td style="padding: 12px; border: 1px solid #bdc3c7; color: #27ae60; font-weight:bold;">O</td>
+                    </tr>
+                    <tr>
+                        <td rowspan="4" style="padding: 12px; border: 1px solid #bdc3c7;"><strong>無</strong>南山實支</td>
+                        <td style="padding: 12px; border: 1px solid #bdc3c7;">有同業HS (僅1張)<br><span style="font-size:14px; color:#7f8c8d;">同業生效日113/7/1前</span></td>
+                        <td style="padding: 12px; border: 1px solid #bdc3c7; color: #c0392b;">X</td>
+                        <td style="padding: 12px; border: 1px solid #bdc3c7; color: #27ae60; font-weight:bold;">O</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 12px; border: 1px solid #bdc3c7;">有同業HS (僅1張)<br><span style="font-size:14px; color:#7f8c8d;">同業生效日113/7/1以後</span></td>
+                        <td colspan="2" style="padding: 12px; border: 1px solid #bdc3c7; color: #27ae60; font-weight:bold;">O 二擇一<br><span style="font-size:14px; color:#e67e22; font-weight:normal;">(1HS限B/C型)</span></td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 12px; border: 1px solid #bdc3c7;">有同業HS (2張含以上)</td>
+                        <td style="padding: 12px; border: 1px solid #bdc3c7; color: #c0392b;">X</td>
+                        <td style="padding: 12px; border: 1px solid #bdc3c7; color: #c0392b;">X</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 12px; border: 1px solid #bdc3c7;">無同業HS</td>
+                        <td style="padding: 12px; border: 1px solid #bdc3c7; color: #27ae60; font-weight:bold;">O</td>
+                        <td style="padding: 12px; border: 1px solid #bdc3c7; color: #27ae60; font-weight:bold;">O</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div style="border-top: 1px solid #eee; padding-top: 20px;">
+                <h4 style="color: #2980b9; font-size: 19px; margin-bottom: 12px;">📌 4. 【其他實支實付通則】(現行 113/8/24起修訂)</h4>
+                <ul style="font-size: 16px; line-height: 1.8; color: #333;">
+                    <li><strong>1HS / 1HSCO：</strong>累計投保南山及保險業之個單(不含團單)實支實付醫療險，<strong>合計限 1 張</strong>。</li>
+                    <li><strong>1HSD：</strong>倘已投保保險業個單實支實付醫療險，將<strong>不再受理</strong>投保及加保。</li>
+                    <li><strong>意外實支 (BBMR/PAMR)：</strong>累計投保南山及保險業個單實支實付傷害醫療險，<strong>合計限 1 張</strong>。若已投保同業，則不受理。</li>
+                </ul>
+            </div>
+        </div>
+
     </div>
 </div>
 
 <script>
-    // ---------------------------------------------------------
-    // WEHS 逐歲真實費率庫 (10年期、20年期、30年期)
-    // ---------------------------------------------------------
     const rates = {
         '10': {
             'M': { 
@@ -192,9 +287,7 @@
         }
     };
     
-    // ---------------------------------------------------------
-    // 1HIR 與 1HSCO A-I型 費率資料庫 (初次投保與續保真實費率)
-    // ---------------------------------------------------------
+    // 1HIR 與 1HSCO A-I型 費率資料庫
     const rate_1HIR_init = {
         'M': [176, 176, 176, 176, 176, 122, 113, 104, 92, 84, 75, 72, 72, 67, 65, 63, 66, 66, 71, 73, 75, 79, 82, 85, 87, 92, 93, 97, 100, 104, 107, 112, 116, 122, 127, 131, 138, 144, 152, 157, 164, 176, 186, 199, 209, 221, 225, 227, 231, 234, 238, 252, 268, 283, 297, 312, 328, 344, 361, 376, 394, 414, 436, 458, 480, 500, 537, 573, 609, 644, 681, 716, 749, 785, 818, 853],
         'F': [154, 154, 154, 154, 154, 108, 99, 88, 78, 69, 58, 56, 55, 54, 52, 49, 52, 53, 54, 56, 59, 63, 67, 72, 78, 83, 93, 101, 114, 122, 133, 134, 136, 138, 137, 139, 142, 143, 144, 145, 148, 150, 151, 156, 157, 160, 166, 172, 177, 182, 189, 193, 200, 207, 211, 218, 227, 236, 244, 253, 262, 284, 305, 328, 349, 370, 397, 422, 449, 476, 501, 537, 573, 610, 645, 682]
@@ -212,7 +305,6 @@
         'F': [0, 4338, 4338, 4338, 4338, 3017, 2429, 1954, 1629, 1412, 1230, 1078, 959, 905, 884, 880, 891, 907, 938, 978, 1025, 1084, 1161, 1271, 1401, 1543, 1692, 1849, 2022, 2205, 2383, 2543, 2666, 2714, 2722, 2708, 2684, 2656, 2617, 2573, 2535, 2503, 2494, 2528, 2584, 2652, 2733, 2826, 2942, 3073, 3210, 3349, 3482, 3601, 3714, 3831, 3961, 4119, 4338, 4589, 5124, 5407, 5675, 5912, 6131, 6346, 6566, 6807, 7087, 7387, 7798, 8090, 8450, 8812, 9534, 38431, 39360, 40281, 41210, 42601, 43985, 46875, 51164, 56012, 61331, 67091]
     };
 
-    // 精算函數：輸入性別、投保年齡與 WEHS 計畫，精準加總 1HIR(依計畫單位數) + 1HSCO A-I型 累計至 85 歲之總保費
     function getTermCostTo85(gender, startAge, plan) {
         let total = 0;
         let hir_units = parseInt(plan); 
@@ -220,7 +312,6 @@
             let cost_1HIR_per_unit = 0;
             let cost_1HSCO = 0;
             
-            // 首年度使用初次投保費率，後續使用續保費率
             if (i === startAge) {
                 cost_1HIR_per_unit = rate_1HIR_init[gender][i]; 
                 cost_1HSCO = rate_1HSCO_init[gender][i]; 
@@ -228,7 +319,6 @@
                 cost_1HIR_per_unit = rate_1HIR_ren[gender][i];
                 cost_1HSCO = rate_1HSCO_ren[gender][i];
             }
-            // 精準累加：1HIR依單位數乘算，1HSCO為單一費率直接相加
             total += (cost_1HIR_per_unit * hir_units) + cost_1HSCO;
         }
         return total;
@@ -243,7 +333,6 @@
                 r_room_gen: '3,000', r_room_icu: '6,000', r_misc_gen: '30萬', r_misc_icu: '60萬', r_misc_cancer: '39萬', r_opd: '500', r_surg_gen: '6萬', r_surg_cancer: '7.8萬'}
     };
 
-    // 動態更新投保年齡 (逐歲載入)，並預設為40歲
     function updateAgeOptions() {
         const term = document.getElementById('term').value;
         const ageSelect = document.getElementById('age');
@@ -285,7 +374,6 @@
         const age = parseInt(document.getElementById('age').value);
         const plan = document.getElementById('plan').value;
         
-        // 從新載入的逐歲陣列中獲取保費
         const annualPremium = rates[term][gender][plan][age];
         const totalPremium = annualPremium * parseInt(term);
         const deathBenefit = totalPremium * 1.06;
@@ -327,7 +415,6 @@
             document.getElementById('upgradeAlert').style.display = 'none';
         }
 
-        // 呼叫精確的自然費率累加函數，1HIR依單位乘算，1HSCO不倍增
         const termTotal = getTermCostTo85(gender, age, plan);
         
         const wehsWidth = Math.min((totalPremium / Math.max(totalPremium, termTotal)) * 100, 100);
@@ -400,6 +487,17 @@
         `;
 
         document.getElementById('resultBox').style.display = 'block';
+    }
+
+    // 新增：切換顯示規則功能
+    function toggleRules() {
+        const rulesDiv = document.getElementById('rulesSection');
+        if (rulesDiv.style.display === 'none') {
+            rulesDiv.style.display = 'block';
+            rulesDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else {
+            rulesDiv.style.display = 'none';
+        }
     }
 
     window.onload = function() {
