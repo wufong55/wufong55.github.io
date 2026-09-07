@@ -22,9 +22,9 @@
         .highlight { color: #059669; }
         .warning { color: #dc2626; font-size: 0.85rem; margin-top: 5px; }
         .info-text { color: #64748b; font-size: 0.85rem; margin-top: 5px; }
-        .tabs { display: flex; margin-bottom: 15px; border-radius: 5px; overflow: hidden; flex-wrap: wrap; }
-        .tab { flex: 1 1 25%; text-align: center; padding: 12px 5px; background: #e2e8f0; cursor: pointer; font-weight: bold; font-size: 0.85rem; transition: 0.3s; }
-        .tab.active { background: #2563eb; color: #fff; }
+        .tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px; }
+        .tab { text-align: center; padding: 12px 5px; background: #e2e8f0; cursor: pointer; font-weight: bold; font-size: 0.85rem; transition: 0.3s; border-radius: 6px; }
+        .tab.active { background: #2563eb; color: #fff; box-shadow: 0 2px 4px rgba(37, 99, 235, 0.3); }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
         hr { border: 0; border-top: 1px dashed #cbd5e1; margin: 20px 0; }
