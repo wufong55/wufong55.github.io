@@ -203,52 +203,26 @@
 
     let cachedUSDRate = null;
     let cachedUSDSource = null;
-    function fetchUSDRate() {
+    async function fetchUSDRate() {
         if (cachedUSDRate) {
             document.getElementById('usd-rate-display').innerText = cachedUSDRate;
             document.getElementById('usd-rate-source').innerText = cachedUSDSource;
             return;
         }
         
-        // 方法 1: 抓取臺銀當日
-        fetch('https://api.allorigins.win/get?url=' + encodeURIComponent('https://rate.bot.com.tw/xrt/flcsv/0/day'))
-            .then(r => r.json())
-            .then(data => {
-                if(!data || !data.contents) throw new Error("Empty");
-                const lines = data.contents.split('\n');
-                let found = false;
-                for(let line of lines) {
-                    if(line.startsWith('USD')) {
-                        const cols = line.split(',');
-                        if(cols.length > 4) {
-                            cachedUSDRate = `買入 ${cols[3]} / 賣出 ${cols[4]}`;
-                            cachedUSDSource = '資料來源: 臺灣銀行牌告匯率 (當日即期)';
-                            document.getElementById('usd-rate-display').innerText = cachedUSDRate;
-                            document.getElementById('usd-rate-source').innerText = cachedUSDSource;
-                            found = true;
-                        }
-                        break;
-                    }
-                }
-                if(!found) throw new Error("Parse failed");
-            })
-            .catch(err => {
-                // 方法 2: 若臺銀抓不到(被擋或無資料)，改用前一日/備援即時匯率
-                fetch('https://tw.rter.info/capi.php')
-                    .then(r => r.json())
-                    .then(data => {
-                        if (data.USDTWD && data.USDTWD.Exrate) {
-                            cachedUSDRate = `參考中價: ${data.USDTWD.Exrate.toFixed(3)}`;
-                            cachedUSDSource = '資料來源: 國際備援即時匯率 (tw.rter.info)';
-                            document.getElementById('usd-rate-display').innerText = cachedUSDRate;
-                            document.getElementById('usd-rate-source').innerText = cachedUSDSource;
-                        }
-                    })
-                    .catch(e => {
-                        document.getElementById('usd-rate-display').innerText = '無法自動取得匯率';
-                        document.getElementById('usd-rate-source').innerText = '請手動參考銀行官網';
-                    });
-            });
+        try {
+            const res = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
+            const data = await res.json();
+            if(data && data.rates && data.rates.TWD) {
+                cachedUSDRate = `參考中價: ${data.rates.TWD.toFixed(3)}`;
+                cachedUSDSource = '資料來源: 最新國際即時匯率 (exchangerate-api)';
+                document.getElementById('usd-rate-display').innerText = cachedUSDRate;
+                document.getElementById('usd-rate-source').innerText = cachedUSDSource;
+            }
+        } catch(e) {
+            document.getElementById('usd-rate-display').innerText = '無法自動取得匯率';
+            document.getElementById('usd-rate-source').innerText = '請手動參考銀行官網';
+        }
     }
 
     // 更新右側面板，依賴 tabMemory 中的數據
