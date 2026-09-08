@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>長照險綜合試算</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <style>
+        .product-card { transition: all 0.3s ease; }
+        .product-card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+        .selected { border: 2px solid #3b82f6; background-color: #eff6ff; }
+        [v-cloak] { display: none; }
+    </style>
+</head>
+<body :class="[isElderlyMode ? 'bg-white' : 'bg-gray-50', 'p-6']" id="body-app">
+    <div id="app" v-cloak class="max-w-7xl mx-auto">
+        <div v-if="!isElderlyMode">
+            
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-8 flex justify-center items-center gap-4">
+            長照險綜合試算
+            <button @click="isElderlyMode = true" class="text-sm bg-blue-100 text-blue-800 px-3 py-1 rounded-full shadow-sm hover:bg-blue-200 transition-colors">切換友善模式</button>
+        </h1>
+
+        <!-- 輸入區 -->
+        <div class="bg-white p-6 rounded-lg shadow-md mb-8 border border-gray-200">
+            <h2 class="text-xl font-semibold mb-4 border-b pb-2">基本資料輸入</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+                <div>
+                    <label class="block text-base font-bold text-gray-800 mb-2">輸入方式</label>
+                    <div class="flex gap-4 text-base">
+                        <label class="inline-flex items-center">
+                            <input type="radio" v-model="inputType" value="dob" class="form-radio text-blue-600 w-5 h-5">
+                            <span class="ml-2">出生年月日</span>
+                        </label>
+                        <label class="inline-flex items-center">
+                            <input type="radio" v-model="inputType" value="age" class="form-radio text-blue-600 w-5 h-5">
+                            <span class="ml-2">直接輸入年齡</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div v-if="inputType === 'dob'">
+                    <label class="block text-base font-bold text-gray-800 mb-2">出生年月日</label>
+                    <input type="date" v-model="dob" @change="calculateAge" class="w-full border-gray-300 rounded-md shadow-sm p-2 border focus:ring-blue-500 focus:border-blue-500 text-base">
+                </div>
+                
+                <div v-if="inputType === 'age'">
+                    <label class="block text-base font-bold text-gray-800 mb-2">保險年齡</label>
+                    <input type="number" v-model.number="age" min="15" max="70" class="w-full border-gray-300 rounded-md shadow-sm p-2 border focus:ring-blue-500 focus:border-blue-500 text-base">
+                </div>
+
+                <div>
+                    <label class="block text-base font-bold text-gray-800 mb-2">性別</label>
+                    <select v-model="gender" class="w-full border-gray-300 rounded-md shadow-sm p-2 border focus:ring-blue-500 focus:border-blue-500 text-base">
+                        <option value="M">男</option>
+                        <option value="F">女</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-base font-bold text-gray-800 mb-2">繳費年期</label>
+                    <select v-model.number="paymentTerm" class="w-full border-gray-300 rounded-md shadow-sm p-2 border focus:ring-blue-500 focus:border-blue-500 text-base">
+                        <option value="10">10年期</option>
+                        <option value="20">20年期</option>
+                        <option value="30">30年期</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-base font-bold text-gray-800 mb-2">保額 (萬元)</label>
+                    <input type="number" v-model.number="amount" min="1" class="w-full border-gray-300 rounded-md shadow-sm p-2 border focus:ring-blue-500 focus:border-blue-500 text-base">
+                </div>
+            </div>
+            
+            <div class="mt-4 text-blue-600 font-semibold text-lg" v-if="inputType === 'dob' && age">
+                計算後保險年齡為：{{ age }} 歲 (超過生日半年多加一歲)
+            </div>
+        </div>
+
+        <!-- 選擇商品區 -->
+        <div class="bg-white p-6 rounded-lg shadow-md mb-8 border border-gray-200">
+            <h2 class="text-xl font-semibold mb-4 border-b pb-2">選擇比較商品 (已選 {{ selectedProducts.length }} 項)</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                <div v-for="(product, key) in productsData" :key="key" 
+                     @click="toggleProduct(key)"
+                     class="product-card cursor-pointer border rounded-lg p-4 text-center border-gray-300"
+                     :class="{'selected': selectedProducts.includes(key), 'opacity-50 cursor-not-allowed': !hasRate(key)}">
+                    <div class="font-bold text-lg text-blue-800">{{ key }}</div>
+                    <div class="text-base font-bold text-gray-800 mt-1">{{ product.name }}</div>
+                    <div class="mt-2 text-xs">
+                        <span v-if="product.refundable" class="bg-green-100 text-green-800 px-2 py-1 rounded-full">可退還</span>
+                        <span v-else class="bg-gray-100 text-gray-800 px-2 py-1 rounded-full">不退還 (純保障)</span>
+                    </div>
+                    <div v-if="!hasRate(key)" class="text-red-500 text-xs mt-2 font-bold">目前年齡/繳期不適用</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 比較結果區 -->
+        <div v-if="selectedProducts.length > 0" class="bg-white p-6 rounded-lg shadow-md overflow-x-auto border border-gray-200">
+            <h2 class="text-xl font-semibold mb-4 border-b pb-2">商品對比</h2>
+            <table class="w-full text-left border-collapse min-w-max border-gray-300">
+                <thead>
+                    <tr>
+                        <th class="p-3 border border-gray-300 bg-gray-100 w-1/6 text-base">比較項目</th>
+                        <th v-for="key in selectedProducts" :key="key" :class="['p-3 border-t-2 border-b-2 text-center', getTheme(key).header, getTheme(key).cell]">
+                            <div :class="['text-2xl font-black', getTheme(key).title]">{{ key }}</div>
+                            <div class="text-lg font-bold text-gray-800 mt-1">{{ productsData[key].name }}</div>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="p-3 border border-gray-300 font-semibold bg-gray-50 text-base">保額</td>
+                        <td v-for="key in selectedProducts" :key="key" :class="['p-3 border-y border-gray-300 text-center text-lg', getTheme(key).cell]">
+                            <span class="font-bold">{{ amount }} 萬元</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="p-3 border border-gray-300 font-semibold bg-gray-50 text-base">年繳保費</td>
+                        <td v-for="key in selectedProducts" :key="key" :class="['p-3 border-y border-gray-300 text-center text-red-600 font-bold text-lg', getTheme(key).cell]">
+                            {{ formatNum(getPremium(key)) }} 元
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="p-3 border border-gray-300 font-semibold bg-gray-50 text-base">總繳保費</td>
+                        <td v-for="key in selectedProducts" :key="key" :class="['p-3 border-y border-gray-300 text-center font-bold text-lg', getTheme(key).cell]">
+                            {{ formatNum(getPremium(key) * paymentTerm) }} 元
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="p-3 border border-gray-300 font-semibold bg-gray-50 text-base">是否退還</td>
+                        <td v-for="key in selectedProducts" :key="key" :class="['p-3 border-y border-gray-300 text-center text-base', getTheme(key).cell]">
+                            <span v-if="productsData[key].refundable" class="text-green-600 font-bold">是<br><span class="text-xs text-gray-500">{{ productsData[key].refundDetail }}</span></span>
+                            <span v-else class="text-gray-500 font-bold">否<br><span class="text-xs">(純保障)</span></span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="p-3 border border-gray-300 font-semibold bg-gray-50 text-base">保障內容明細</td>
+                        <td v-for="key in selectedProducts" :key="key" :class="['p-3 border-y border-gray-300 align-top text-sm', getTheme(key).cell]">
+                            <ul class="list-none space-y-4">
+                                <li v-for="item in getCoverageDetails(key)" :key="item.title">
+                                    <div class="font-bold text-gray-800 text-base mb-2 bg-blue-100 px-3 py-1.5 rounded-md inline-block shadow-sm border border-blue-200">{{ item.title }}</div>
+                                    <div v-if="item.value" class="text-blue-700 text-sm font-semibold pl-1">{{ item.value }}</div>
+                                    <div v-if="item.subList" class="mt-2 pl-3 border-l-4 border-blue-300 text-gray-800 columns-2 gap-x-2 text-sm font-semibold space-y-1">
+                                        <div v-for="subItem in item.subList" :key="subItem" class="break-inside-avoid">{{ subItem }}</div>
+                                    </div>
+                                    <div v-if="item.footer" class="mt-2 pl-3 font-bold text-red-600 text-sm bg-red-50 py-1 border-l-4 border-red-400">
+                                        {{ item.footer }}
+                                    </div>
+                                </li>
+                            </ul>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="mt-4 text-xs text-gray-500 font-medium">
+                * 註：1. 長照/失能分期保險金依約定按給付次數單利2%增加(FLTC與HTLTC除外)，給付最多15次。2. 健康促進係數在此假設為預設值或不列入加計。3. 身故/祝壽保險金計算為預估值(如年繳保費總和的倍數)。
+            </div>
+        </div>
+
+        </div>
+        <div v-if="isElderlyMode">
+            
+        <h1 class="text-5xl font-bold text-center text-black mb-8 flex flex-col items-center gap-4">
+            長照險綜合試算
+            <button @click="isElderlyMode = false" class="text-2xl bg-blue-100 text-blue-900 font-extrabold px-4 py-2 rounded-full shadow-sm hover:bg-blue-200 transition-colors">切換標準模式</button>
+        </h1>
+
+        <!-- 輸入區 -->
+        <div class="bg-white p-6 rounded-lg shadow-md mb-8 border-2 border-gray-200">
+            <h2 class="text-3xl font-semibold mb-4 border-b pb-2">基本資料輸入</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+                <div>
+                    <label class="block text-xl font-bold text-black mb-2">輸入方式</label>
+                    <div class="flex gap-4 text-xl">
+                        <label class="inline-flex items-center">
+                            <input type="radio" v-model="inputType" value="dob" class="form-radio text-blue-600 w-5 h-5">
+                            <span class="ml-2">出生年月日</span>
+                        </label>
+                        <label class="inline-flex items-center">
+                            <input type="radio" v-model="inputType" value="age" class="form-radio text-blue-600 w-5 h-5">
+                            <span class="ml-2">直接輸入年齡</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div v-if="inputType === 'dob'">
+                    <label class="block text-xl font-bold text-black mb-2">出生年月日</label>
+                    <input type="date" v-model="dob" @change="calculateAge" class="w-full border-gray-300 rounded-md shadow-sm p-2 border-2 focus:ring-blue-500 focus:border-blue-500 text-xl">
+                </div>
+                
+                <div v-if="inputType === 'age'">
+                    <label class="block text-xl font-bold text-black mb-2">保險年齡</label>
+                    <input type="number" v-model.number="age" min="15" max="70" class="w-full border-gray-300 rounded-md shadow-sm p-2 border-2 focus:ring-blue-500 focus:border-blue-500 text-xl">
+                </div>
+
+                <div>
+                    <label class="block text-xl font-bold text-black mb-2">性別</label>
+                    <select v-model="gender" class="w-full border-gray-300 rounded-md shadow-sm p-2 border-2 focus:ring-blue-500 focus:border-blue-500 text-xl">
+                        <option value="M">男</option>
+                        <option value="F">女</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xl font-bold text-black mb-2">繳費年期</label>
+                    <select v-model.number="paymentTerm" class="w-full border-gray-300 rounded-md shadow-sm p-2 border-2 focus:ring-blue-500 focus:border-blue-500 text-xl">
+                        <option value="10">10年期</option>
+                        <option value="20">20年期</option>
+                        <option value="30">30年期</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xl font-bold text-black mb-2">保額 (萬元)</label>
+                    <input type="number" v-model.number="amount" min="1" class="w-full border-gray-300 rounded-md shadow-sm p-2 border-2 focus:ring-blue-500 focus:border-blue-500 text-xl">
+                </div>
+            </div>
+            
+            <div class="mt-4 text-blue-600 font-semibold text-2xl" v-if="inputType === 'dob' && age">
+                計算後保險年齡為：{{ age }} 歲 (超過生日半年多加一歲)
+            </div>
+        </div>
+
+        <!-- 選擇商品區 -->
+        <div class="bg-white p-6 rounded-lg shadow-md mb-8 border-2 border-gray-200">
+            <h2 class="text-3xl font-semibold mb-4 border-b pb-2">選擇比較商品 (已選 {{ selectedProducts.length }} 項)</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                <div v-for="(product, key) in productsData" :key="key" 
+                     @click="toggleProduct(key)"
+                     class="product-card cursor-pointer border-2 rounded-lg p-4 text-center border-gray-300"
+                     :class="{'selected': selectedProducts.includes(key), 'opacity-50 cursor-not-allowed': !hasRate(key)}">
+                    <div class="font-bold text-2xl text-blue-900 font-extrabold">{{ key }}</div>
+                    <div class="text-xl font-bold text-black mt-1">{{ product.name }}</div>
+                    <div class="mt-2 text-base">
+                        <span v-if="product.refundable" class="bg-green-100 text-green-800 px-2 py-1 rounded-full">可退還</span>
+                        <span v-else class="bg-gray-100 text-black px-2 py-1 rounded-full">不退還 (純保障)</span>
+                    </div>
+                    <div v-if="!hasRate(key)" class="text-red-500 text-base mt-2 font-bold">目前年齡/繳期不適用</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 比較結果區 -->
+        <div v-if="selectedProducts.length > 0" class="bg-white p-6 rounded-lg shadow-md overflow-x-auto border-2 border-gray-200">
+            <h2 class="text-3xl font-semibold mb-4 border-b pb-2">商品對比</h2>
+            <table class="w-full text-left border-collapse min-w-max border-gray-300">
+                <thead>
+                    <tr>
+                        <th class="p-5 border-2 border-gray-300 bg-gray-100 w-1/6 text-xl">比較項目</th>
+                        <th v-for="key in selectedProducts" :key="key" :class="['p-5 border-t-2 border-b-2 text-center', getTheme(key).header, getTheme(key).cell]">
+                            <div :class="['text-4xl font-black', getTheme(key).title]">{{ key }}</div>
+                            <div class="text-2xl font-bold text-black mt-1">{{ productsData[key].name }}</div>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="p-5 border-2 border-gray-300 font-semibold bg-gray-50 text-xl">保額</td>
+                        <td v-for="key in selectedProducts" :key="key" :class="['p-5 border-y-4 border-gray-300 text-center text-2xl', getTheme(key).cell]">
+                            <span class="font-bold">{{ amount }} 萬元</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="p-5 border-2 border-gray-300 font-semibold bg-gray-50 text-xl">年繳保費</td>
+                        <td v-for="key in selectedProducts" :key="key" :class="['p-5 border-y-4 border-gray-300 text-center text-red-600 font-bold text-2xl', getTheme(key).cell]">
+                            {{ formatNum(getPremium(key)) }} 元
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="p-5 border-2 border-gray-300 font-semibold bg-gray-50 text-xl">總繳保費</td>
+                        <td v-for="key in selectedProducts" :key="key" :class="['p-5 border-y-4 border-gray-300 text-center font-bold text-2xl', getTheme(key).cell]">
+                            {{ formatNum(getPremium(key) * paymentTerm) }} 元
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="p-5 border-2 border-gray-300 font-semibold bg-gray-50 text-xl">是否退還</td>
+                        <td v-for="key in selectedProducts" :key="key" :class="['p-5 border-y-4 border-gray-300 text-center text-xl', getTheme(key).cell]">
+                            <span v-if="productsData[key].refundable" class="text-green-600 font-bold">是<br><span class="text-base text-gray-700">{{ productsData[key].refundDetail }}</span></span>
+                            <span v-else class="text-gray-700 font-bold">否<br><span class="text-base">(純保障)</span></span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="p-5 border-2 border-gray-300 font-semibold bg-gray-50 text-xl">保障內容明細</td>
+                        <td v-for="key in selectedProducts" :key="key" :class="['p-5 border-y-4 border-gray-300 align-top text-lg', getTheme(key).cell]">
+                            <ul class="list-none space-y-4">
+                                <li v-for="item in getCoverageDetails(key)" :key="item.title">
+                                    <div class="font-bold text-black text-xl mb-2 bg-blue-100 px-3 py-1.5 rounded-md inline-block shadow-sm border border-blue-200">{{ item.title }}</div>
+                                    <div v-if="item.value" class="text-blue-900 font-bold text-lg font-semibold pl-1">{{ item.value }}</div>
+                                    <div v-if="item.subList" class="mt-2 pl-3 border-l-4 border-blue-300 text-black columns-1 lg:columns-2 gap-x-2 text-lg font-semibold space-y-1">
+                                        <div v-for="subItem in item.subList" :key="subItem" class="break-inside-avoid">{{ subItem }}</div>
+                                    </div>
+                                    <div v-if="item.footer" class="mt-2 pl-3 font-bold text-red-600 text-lg bg-red-50 py-1 border-l-4 border-red-400">
+                                        {{ item.footer }}
+                                    </div>
+                                </li>
+                            </ul>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="mt-4 text-base text-gray-700 font-medium">
+                * 註：1. 長照/失能分期保險金依約定按給付次數單利2%增加(FLTC與HTLTC除外)，給付最多15次。2. 健康促進係數在此假設為預設值或不列入加計。3. 身故/祝壽保險金計算為預估值(如年繳保費總和的倍數)。
+            </div>
+        </div>
+
+        </div>
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+
+        const ratesData = {"FLTC": {"10": {"M": {"15": "870", "43": "1398", "16": "879", "44": "1429", "17": "888", "45": "1460", "18": "897", "46": "1491", "19": "906", "47": "1522", "20": "915", "48": "1553", "21": "932", "49": "1584", "22": "949", "50": "1615", "23": "966", "51": "1662", "24": "983", "52": "1708", "25": "1000", "53": "1755", "26": "1017", "54": "1801", "27": "1034", "55": "1848", "28": "1051", "56": "1894", "29": "1068", "57": "1941", "30": "1085", "58": "1987", "31": "1107", "59": "2034", "32": "1129", "60": "2080", "33": "1151", "61": "2147", "34": "1173", "62": "2214", "35": "1195", "63": "2281", "36": "1217", "64": "2348", "37": "1239", "65": "2415", "38": "1261", "66": "2519", "39": "1283", "67": "2623", "40": "1305", "68": "2727", "41": "1336", "69": "2831", "42": "1367", "70": "2935"}, "F": {"15": "1215", "43": "1992", "16": "1237", "44": "2032", "17": "1259", "45": "2073", "18": "1281", "46": "2113", "19": "1303", "47": "2154", "20": "1325", "48": "2194", "21": "1350", "49": "2235", "22": "1375", "50": "2275", "23": "1400", "51": "2328", "24": "1425", "52": "2380", "25": "1450", "53": "2433", "26": "1475", "54": "2485", "27": "1500", "55": "2538", "28": "1525", "56": "2590", "29": "1550", "57": "2643", "30": "1575", "58": "2695", "31": "1605", "59": "2748", "32": "1634", "60": "2800", "33": "1664", "61": "2876", "34": "1693", "62": "2952", "35": "1723", "63": "3028", "36": "1752", "64": "3104", "37": "1782", "65": "3180", "38": "1811", "66": "3314", "39": "1841", "67": "3448", "40": "1870", "68": "3582", "41": "1911", "69": "3716", "42": "1951", "70": "3850"}}, "20": {"M": {"15": "450", "43": "744", "16": "455", "44": "763", "17": "460", "45": "783", "18": "465", "46": "802", "19": "470", "47": "822", "20": "475", "48": "841", "21": "485", "49": "861", "22": "494", "50": "880", "23": "504", "51": "910", "24": "513", "52": "939", "25": "523", "53": "969", "26": "532", "54": "998", "27": "542", "55": "1028", "28": "551", "56": "1057", "29": "561", "57": "1087", "30": "570", "58": "1116", "31": "582", "59": "1146", "32": "593", "60": "1175", "33": "605", "61": null, "34": "616", "62": null, "35": "628", "63": null, "36": "639", "64": null, "37": "651", "65": null, "38": "662", "66": null, "39": "674", "67": null, "40": "685", "68": null, "41": "705", "69": null, "42": "724", "70": null}, "F": {"15": "615", "43": "1008", "16": "626", "44": "1029", "17": "637", "45": "1050", "18": "648", "46": "1071", "19": "659", "47": "1092", "20": "670", "48": "1113", "21": "683", "49": "1134", "22": "695", "50": "1155", "23": "708", "51": "1195", "24": "720", "52": "1234", "25": "733", "53": "1274", "26": "745", "54": "1313", "27": "758", "55": "1353", "28": "770", "56": "1392", "29": "783", "57": "1432", "30": "795", "58": "1471", "31": "810", "59": "1511", "32": "825", "60": "1550", "33": "840", "61": null, "34": "855", "62": null, "35": "870", "63": null, "36": "885", "64": null, "37": "900", "65": null, "38": "915", "66": null, "39": "930", "67": null, "40": "945", "68": null, "41": "966", "69": null, "42": "987", "70": null}}, "30": {"M": {"15": "305", "43": "544", "16": "310", "44": "563", "17": "315", "45": "583", "18": "320", "46": "602", "19": "325", "47": "622", "20": "330", "48": "641", "21": "337", "49": "661", "22": "344", "50": "680", "23": "351", "51": null, "24": "358", "52": null, "25": "365", "53": null, "26": "372", "54": null, "27": "379", "55": null, "28": "386", "56": null, "29": "393", "57": null, "30": "400", "58": null, "31": "409", "59": null, "32": "417", "60": null, "33": "426", "61": null, "34": "434", "62": null, "35": "443", "63": null, "36": "451", "64": null, "37": "460", "65": null, "38": "468", "66": null, "39": "477", "67": null, "40": "485", "68": null, "41": "505", "69": null, "42": "524", "70": null}, "F": {"15": "420", "43": "746", "16": "429", "44": "764", "17": "438", "45": "783", "18": "447", "46": "801", "19": "456", "47": "820", "20": "465", "48": "838", "21": "474", "49": "857", "22": "482", "50": "875", "23": "491", "51": null, "24": "499", "52": null, "25": "508", "53": null, "26": "516", "54": null, "27": "525", "55": null, "28": "533", "56": null, "29": "542", "57": null, "30": "550", "58": null, "31": "564", "59": null, "32": "578", "60": null, "33": "592", "61": null, "34": "606", "62": null, "35": "620", "63": null, "36": "634", "64": null, "37": "648", "65": null, "38": "662", "66": null, "39": "676", "67": null, "40": "690", "68": null, "41": "709", "69": null, "42": "727", "70": null}}}, "HLTC": {"10": {"M": {"15": "1810", "41": "4433", "16": "1886", "42": "4646", "17": "1962", "43": "4859", "18": "2038", "44": "5072", "19": "2114", "45": "5285", "20": "2190", "46": "5498", "21": "2268", "47": "5711", "22": "2346", "48": "5924", "23": "2424", "49": "6137", "24": "2502", "50": "6350", "25": "2580", "51": "6910", "26": "2658", "52": "7470", "27": "2736", "53": "8030", "28": "2814", "54": "8590", "29": "2892", "55": "9150", "30": "2970", "56": "9710", "31": "3095", "57": "10270", "32": "3220", "58": "10830", "33": "3345", "59": "11390", "34": "3470", "60": "11950", "35": "3595", "61": "13132", "36": "3720", "62": "14314", "37": "3845", "63": "15496", "38": "3970", "64": "16678", "39": "4095", "65": "17860", "40": "4220"}, "F": {"15": "2435", "41": "5739", "16": "2530", "42": "5998", "17": "2625", "43": "6257", "18": "2720", "44": "6516", "19": "2815", "45": "6775", "20": "2910", "46": "7034", "21": "3009", "47": "7293", "22": "3108", "48": "7552", "23": "3207", "49": "7811", "24": "3306", "50": "8070", "25": "3405", "51": "8776", "26": "3504", "52": "9482", "27": "3603", "53": "10188", "28": "3702", "54": "10894", "29": "3801", "55": "11600", "30": "3900", "56": "12306", "31": "4058", "57": "13012", "32": "4216", "58": "13718", "33": "4374", "59": "14424", "34": "4532", "60": "15130", "35": "4690", "61": "16644", "36": "4848", "62": "18158", "37": "5006", "63": "19672", "38": "5164", "64": "21186", "39": "5322", "65": "22700", "40": "5480"}}, "20": {"M": {"15": "990", "41": "2281", "16": "1034", "42": "2392", "17": "1078", "43": "2503", "18": "1122", "44": "2614", "19": "1166", "45": "2725", "20": "1210", "46": "2836", "21": "1248", "47": "2947", "22": "1286", "48": "3058", "23": "1324", "49": "3169", "24": "1362", "50": "3280", "25": "1400", "51": "3630", "26": "1438", "52": "3980", "27": "1476", "53": "4330", "28": "1514", "54": "4680", "29": "1552", "55": "5030", "30": "1590", "56": "5380", "31": "1648", "57": "5730", "32": "1706", "58": "6080", "33": "1764", "59": "6430", "34": "1822", "60": "6780", "35": "1880", "61": null, "36": "1938", "62": null, "37": "1996", "63": null, "38": "2054", "64": null, "39": "2112", "65": null, "40": "2170"}, "F": {"15": "1340", "41": "2925", "16": "1394", "42": "3060", "17": "1448", "43": "3195", "18": "1502", "44": "3330", "19": "1556", "45": "3465", "20": "1610", "46": "3600", "21": "1655", "47": "3735", "22": "1700", "48": "3870", "23": "1745", "49": "4005", "24": "1790", "50": "4140", "25": "1835", "51": "4589", "26": "1880", "52": "5038", "27": "1925", "53": "5487", "28": "1970", "54": "5936", "29": "2015", "55": "6385", "30": "2060", "56": "6834", "31": "2133", "57": "7283", "32": "2206", "58": "7732", "33": "2279", "59": "8181", "34": "2352", "60": "8630", "35": "2425", "61": null, "36": "2498", "62": null, "37": "2571", "63": null, "38": "2644", "64": null, "39": "2717", "65": null, "40": "2790"}}}, "HTLTC": {"10": {"M": {"15": "1190", "41": "1873", "16": "1202", "42": "1916", "17": "1214", "43": "1959", "18": "1226", "44": "2002", "19": "1238", "45": "2045", "20": "1250", "46": "2088", "21": "1273", "47": "2131", "22": "1296", "48": "2174", "23": "1319", "49": "2217", "24": "1342", "50": "2260", "25": "1365", "51": "2331", "26": "1388", "52": "2402", "27": "1411", "53": "2473", "28": "1434", "54": "2544", "29": "1457", "55": "2615", "30": "1480", "56": "2686", "31": "1515", "57": "2757", "32": "1550", "58": "2828", "33": "1585", "59": "2899", "34": "1620", "60": "2970", "35": "1655", "61": "3066", "36": "1690", "62": "3162", "37": "1725", "63": "3258", "38": "1760", "64": "3354", "39": "1795", "65": "3450", "40": "1830"}, "F": {"15": "1550", "41": "2511", "16": "1578", "42": "2572", "17": "1606", "43": "2633", "18": "1634", "44": "2694", "19": "1662", "45": "2755", "20": "1690", "46": "2816", "21": "1722", "47": "2877", "22": "1754", "48": "2938", "23": "1786", "49": "2999", "24": "1818", "50": "3060", "25": "1850", "51": "3155", "26": "1882", "52": "3250", "27": "1914", "53": "3345", "28": "1946", "54": "3440", "29": "1978", "55": "3535", "30": "2010", "56": "3630", "31": "2054", "57": "3725", "32": "2098", "58": "3820", "33": "2142", "59": "3915", "34": "2186", "60": "4010", "35": "2230", "61": "4116", "36": "2274", "62": "4222", "37": "2318", "63": "4328", "38": "2362", "64": "4434", "39": "2406", "65": "4540", "40": "2450"}}, "20": {"M": {"15": "620", "41": "990", "16": "626", "42": "1020", "17": "632", "43": "1050", "18": "638", "44": "1080", "19": "644", "45": "1110", "20": "650", "46": "1140", "21": "663", "47": "1170", "22": "676", "48": "1200", "23": "689", "49": "1230", "24": "702", "50": "1260", "25": "715", "51": "1302", "26": "728", "52": "1344", "27": "741", "53": "1386", "28": "754", "54": "1428", "29": "767", "55": "1470", "30": "780", "56": "1512", "31": "798", "57": "1554", "32": "816", "58": "1596", "33": "834", "59": "1638", "34": "852", "60": "1680", "35": "870", "61": null, "36": "888", "62": null, "37": "906", "63": null, "38": "924", "64": null, "39": "942", "65": null, "40": "960"}, "F": {"15": "800", "41": "1316", "16": "814", "42": "1352", "17": "828", "43": "1388", "18": "842", "44": "1424", "19": "856", "45": "1460", "20": "870", "46": "1496", "21": "887", "47": "1532", "22": "904", "48": "1568", "23": "921", "49": "1604", "24": "938", "50": "1640", "25": "955", "51": "1697", "26": "972", "52": "1754", "27": "989", "53": "1811", "28": "1006", "54": "1868", "29": "1023", "55": "1925", "30": "1040", "56": "1982", "31": "1064", "57": "2039", "32": "1088", "58": "2096", "33": "1112", "59": "2153", "34": "1136", "60": "2210", "35": "1160", "61": null, "36": "1184", "62": null, "37": "1208", "63": null, "38": "1232", "64": null, "39": "1256", "65": null, "40": "1280"}}, "30": {"M": {"15": "420", "41": "718", "16": "426", "42": "746", "17": "432", "43": "768", "18": "438", "44": "793", "19": "444", "45": "818", "20": "450", "46": "846", "21": "460", "47": "878", "22": "470", "48": "910", "23": "480", "49": "942", "24": "490", "50": "970", "25": "500", "51": null, "26": "510", "52": null, "27": "520", "53": null, "28": "530", "54": null, "29": "540", "55": null, "30": "550", "56": null, "31": "564", "57": null, "32": "578", "58": null, "33": "592", "59": null, "34": "606", "60": null, "35": "620", "61": null, "36": "634", "62": null, "37": "648", "63": null, "38": "662", "64": null, "39": "676", "65": null, "40": "690"}, "F": {"15": "550", "41": "998", "16": "562", "42": "1026", "17": "574", "43": "1054", "18": "586", "44": "1082", "19": "598", "45": "1110", "20": "610", "46": "1138", "21": "623", "47": "1166", "22": "636", "48": "1194", "23": "649", "49": "1222", "24": "662", "50": "1250", "25": "675", "51": null, "26": "688", "52": null, "27": "701", "53": null, "28": "714", "54": null, "29": "727", "55": null, "30": "740", "56": null, "31": "763", "57": null, "32": "786", "58": null, "33": "809", "59": null, "34": "832", "60": null, "35": "855", "61": null, "36": "878", "62": null, "37": "901", "63": null, "38": "924", "64": null, "39": "947", "65": null, "40": "970"}}}, "HPLTC": {"10": {"M": {"15": "2020", "41": "5166", "16": "2106", "42": "5432", "17": "2192", "43": "5698", "18": "2278", "44": "5964", "19": "2364", "45": "6230", "20": "2450", "46": "6496", "21": "2549", "47": "6762", "22": "2648", "48": "7028", "23": "2747", "49": "7294", "24": "2846", "50": "7560", "25": "2945", "51": "8228", "26": "3044", "52": "8896", "27": "3143", "53": "9564", "28": "3242", "54": "10232", "29": "3341", "55": "10900", "30": "3440", "56": "11568", "31": "3586", "57": "12236", "32": "3732", "58": "12904", "33": "3878", "59": "13572", "34": "4024", "60": "14240", "35": "4170", "61": "15672", "36": "4316", "62": "17104", "37": "4462", "63": "18536", "38": "4608", "64": "19968", "39": "4754", "65": "21400", "40": "4900"}, "F": {"15": "2720", "41": "6683", "16": "2828", "42": "7006", "17": "2936", "43": "7329", "18": "3044", "44": "7652", "19": "3152", "45": "7975", "20": "3260", "46": "8298", "21": "3386", "47": "8621", "22": "3512", "48": "8944", "23": "3638", "49": "9267", "24": "3764", "50": "9590", "25": "3890", "51": "10431", "26": "4016", "52": "11272", "27": "4142", "53": "12113", "28": "4268", "54": "12954", "29": "4394", "55": "13795", "30": "4520", "56": "14636", "31": "4704", "57": "15477", "32": "4888", "58": "16318", "33": "5072", "59": "17159", "34": "5256", "60": "18000", "35": "5440", "61": "19828", "36": "5624", "62": "21656", "37": "5808", "63": "23484", "38": "5992", "64": "25312", "39": "6176", "65": "27140", "40": "6360"}}, "20": {"M": {"15": "1100", "41": "2658", "16": "1150", "42": "2796", "17": "1200", "43": "2934", "18": "1250", "44": "3072", "19": "1300", "45": "3210", "20": "1350", "46": "3348", "21": "1399", "47": "3486", "22": "1448", "48": "3624", "23": "1497", "49": "3762", "24": "1546", "50": "3900", "25": "1595", "51": "4320", "26": "1644", "52": "4740", "27": "1693", "53": "5160", "28": "1742", "54": "5580", "29": "1791", "55": "6000", "30": "1840", "56": "6420", "31": "1908", "57": "6840", "32": "1976", "58": "7260", "33": "2044", "59": "7680", "34": "2112", "60": "8100", "35": "2180", "61": null, "36": "2248", "62": null, "37": "2316", "63": null, "38": "2384", "64": null, "39": "2452", "65": null, "40": "2520"}, "F": {"15": "1500", "41": "3409", "16": "1562", "42": "3578", "17": "1624", "43": "3747", "18": "1686", "44": "3916", "19": "1748", "45": "4085", "20": "1810", "46": "4254", "21": "1868", "47": "4423", "22": "1926", "48": "4592", "23": "1984", "49": "4761", "24": "2042", "50": "4930", "25": "2100", "51": "5467", "26": "2158", "52": "6004", "27": "2216", "53": "6541", "28": "2274", "54": "7078", "29": "2332", "55": "7615", "30": "2390", "56": "8152", "31": "2475", "57": "8689", "32": "2560", "58": "9226", "33": "2645", "59": "9763", "34": "2730", "60": "10300", "35": "2815", "61": null, "36": "2900", "62": null, "37": "2985", "63": null, "38": "3070", "64": null, "39": "3155", "65": null, "40": "3240"}}}, "HRLTC3": {"10": {"M": {"15": "1480", "43": "3012", "16": "1509", "44": "3146", "17": "1538", "45": "3280", "18": "1567", "46": "3414", "19": "1596", "47": "3548", "20": "1625", "48": "3682", "21": "1670", "49": "3816", "22": "1715", "50": "3950", "23": "1760", "51": "4267", "24": "1805", "52": "4583", "25": "1850", "53": "4900", "26": "1895", "54": "5216", "27": "1940", "55": "5533", "28": "1985", "56": "5849", "29": "2030", "57": "6166", "30": "2075", "58": "6482", "31": "2129", "59": "6799", "32": "2182", "60": "7115", "33": "2236", "61": "7962", "34": "2289", "62": "8808", "35": "2343", "63": "9655", "36": "2396", "64": "10501", "37": "2450", "65": "11348", "38": "2503", "66": "12194", "39": "2557", "67": "13041", "40": "2610", "68": "13887", "41": "2744", "69": "14734", "42": "2878", "70": "15580"}, "F": {"15": "1835", "43": "3587", "16": "1871", "44": "3722", "17": "1907", "45": "3858", "18": "1943", "46": "3993", "19": "1979", "47": "4129", "20": "2015", "48": "4264", "21": "2073", "49": "4400", "22": "2130", "50": "4535", "23": "2188", "51": "4791", "24": "2245", "52": "5046", "25": "2303", "53": "5302", "26": "2360", "54": "5557", "27": "2418", "55": "5813", "28": "2475", "56": "6068", "29": "2533", "57": "6324", "30": "2590", "58": "6579", "31": "2649", "59": "6835", "32": "2708", "60": "7090", "33": "2767", "61": "7938", "34": "2826", "62": "8786", "35": "2885", "63": "9634", "36": "2944", "64": "10482", "37": "3003", "65": "11330", "38": "3062", "66": "12178", "39": "3121", "67": "13026", "40": "3180", "68": "13874", "41": "3316", "69": "14722", "42": "3451", "70": "15570"}}, "20": {"M": {"15": "830", "43": "1685", "16": "847", "44": "1756", "17": "864", "45": "1828", "18": "881", "46": "1899", "19": "898", "47": "1971", "20": "915", "48": "2042", "21": "941", "49": "2114", "22": "967", "50": "2185", "23": "993", "51": "2348", "24": "1019", "52": "2510", "25": "1045", "53": "2673", "26": "1071", "54": "2835", "27": "1097", "55": "2998", "28": "1123", "56": "3160", "29": "1149", "57": "3323", "30": "1175", "58": "3485", "31": "1205", "59": "3648", "32": "1234", "60": "3810", "33": "1264", "61": null, "34": "1293", "62": null, "35": "1323", "63": null, "36": "1352", "64": null, "37": "1382", "65": null, "38": "1411", "66": null, "39": "1441", "67": null, "40": "1470", "68": null, "41": "1542", "69": null, "42": "1613", "70": null}, "F": {"15": "1035", "43": "2028", "16": "1056", "44": "2105", "17": "1077", "45": "2183", "18": "1098", "46": "2260", "19": "1119", "47": "2338", "20": "1140", "48": "2415", "21": "1172", "49": "2493", "22": "1203", "50": "2570", "23": "1235", "51": "2694", "24": "1266", "52": "2818", "25": "1298", "53": "2942", "26": "1329", "54": "3066", "27": "1361", "55": "3190", "28": "1392", "56": "3314", "29": "1424", "57": "3438", "30": "1455", "58": "3562", "31": "1489", "59": "3686", "32": "1523", "60": "3810", "33": "1557", "61": null, "34": "1591", "62": null, "35": "1625", "63": null, "36": "1659", "64": null, "37": "1693", "65": null, "38": "1727", "66": null, "39": "1761", "67": null, "40": "1795", "68": null, "41": "1873", "69": null, "42": "1950", "70": null}}}};
+
+        createApp({
+            data() {
+                return {
+                    isElderlyMode: false,
+                    inputType: 'age',
+                    dob: '',
+                    age: 40,
+                    gender: 'F',
+                    paymentTerm: 20,
+                    amount: 24,
+                    selectedProducts: [],
+                    productsData: {
+                        'FLTC': {
+                            name: '輕鬆陪伴長期照顧健康保險',
+                            refundable: false,
+                            refundDetail: ''
+                        },
+                        'HLTC': {
+                            name: '溢路守護長期照顧終身健康保險',
+                            refundable: true,
+                            refundDetail: '身故或祝壽保險金'
+                        },
+                        'HTLTC': {
+                            name: '溢路陪伴長期照顧健康保險',
+                            refundable: false,
+                            refundDetail: ''
+                        },
+                        'HPLTC': {
+                            name: '溢路相挺長期照顧終身保險',
+                            refundable: true,
+                            refundDetail: '身故或祝壽保險金'
+                        },
+                        'HRLTC3': {
+                            name: '相守溢百長期照顧終身保險',
+                            refundable: true,
+                            refundDetail: '身故或祝壽保險金'
+                        }
+                    }
+                }
+            },
+            methods: {
+                getTheme(key) {
+                    const themes = {
+                        'FLTC': { header: 'bg-emerald-50 border-emerald-400', title: 'text-emerald-800', cell: 'border-emerald-300 border-x-4 bg-emerald-50/20' },
+                        'HLTC': { header: 'bg-indigo-50 border-indigo-400', title: 'text-indigo-800', cell: 'border-indigo-300 border-x-4 bg-indigo-50/20' },
+                        'HTLTC': { header: 'bg-amber-50 border-amber-400', title: 'text-amber-800', cell: 'border-amber-300 border-x-4 bg-amber-50/20' },
+                        'HPLTC': { header: 'bg-rose-50 border-rose-400', title: 'text-rose-800', cell: 'border-rose-300 border-x-4 bg-rose-50/20' },
+                        'HRLTC3': { header: 'bg-cyan-50 border-cyan-400', title: 'text-cyan-800', cell: 'border-cyan-300 border-x-4 bg-cyan-50/20' }
+                    };
+                    return themes[key] || { header: 'bg-gray-50 border-gray-400', title: 'text-gray-800', cell: 'border-gray-300 border-x-4 bg-white' };
+                },
+                formatNum(num) {
+                    if(num === null || isNaN(num)) return '-';
+                    return Math.round(num).toLocaleString();
+                },
+                formatDec(num) {
+                    return Number(num).toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 4});
+                },
+                calculateAge() {
+                    if (!this.dob) return;
+                    const dob = new Date(this.dob);
+                    const today = new Date();
+                    
+                    let age = today.getFullYear() - dob.getFullYear();
+                    const monthDiff = today.getMonth() - dob.getMonth();
+                    const dayDiff = today.getDate() - dob.getDate();
+
+                    if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) {
+                        age--;
+                    }
+
+                    let halfYearDate = new Date(dob);
+                    halfYearDate.setFullYear(today.getFullYear());
+                    if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) {
+                        halfYearDate.setFullYear(today.getFullYear() - 1);
+                    }
+                    halfYearDate.setMonth(halfYearDate.getMonth() + 6);
+
+                    if (today >= halfYearDate) {
+                        age++; 
+                    }
+
+                    this.age = age;
+                },
+                getRate(prod) {
+                    try {
+                        const rateStr = ratesData[prod][this.paymentTerm.toString()][this.gender][this.age.toString()];
+                        if (rateStr === null || rateStr === undefined) return null;
+                        return parseFloat(rateStr);
+                    } catch (e) {
+                        return null;
+                    }
+                },
+                hasRate(prod) {
+                    return this.getRate(prod) !== null;
+                },
+                toggleProduct(key) {
+                    if (!this.hasRate(key)) return;
+                    const index = this.selectedProducts.indexOf(key);
+                    if (index > -1) {
+                        this.selectedProducts.splice(index, 1);
+                    } else {
+                        if (this.selectedProducts.length >= 5) {
+                            alert('最多選擇5個商品進行比較');
+                            return;
+                        }
+                        this.selectedProducts.push(key);
+                    }
+                },
+                getPremium(key) {
+                    const rate = this.getRate(key);
+                    if (rate === null) return null;
+                    return rate * this.amount;
+                },
+                getCoverageDetails(key) {
+                    let details = [];
+                    const premium = this.getPremium(key);
+                    const totalPremium = premium ? premium * this.paymentTerm : 0;
+                    const amt = this.amount; 
+                    
+                    const format10K = (val) => this.formatDec(val) + " 萬";
+
+                    if (key === 'FLTC') {
+                        details.push({title: '長照/完全失能分期保險金 (最高15次)', value: `每次 ${format10K(amt)}`, footer: `合計總金額: ${format10K(amt * 15)}`});
+                        details.push({title: '豁免保費', value: '達1~6級失能或長期照顧狀態'});
+                    } 
+                    else if (key === 'HLTC') {
+                        let subList = [];
+                        for(let i=1; i<=15; i++) {
+                            subList.push(`第${i}次: ${format10K(amt * (1 + 0.02 * (i - 1)))}`);
+                        }
+                        details.push({title: '長照/完全失能一次保險金', value: `預估 ${format10K(totalPremium * 1.02 / 10000)} (年繳保費總和的1.02倍)`});
+                        details.push({title: '長照/完全失能分期保險金 (單利2%遞增, 最高15次)', value: '', subList: subList, footer: `合計總金額: ${format10K(amt * 17.1)}`});
+                        details.push({title: '無理賠鼓勵/關懷保險金', value: `預估 ${format10K(totalPremium * 1.02 / 10000)} (身故/屆滿未曾理賠)`});
+                        details.push({title: '豁免保費', value: '達1~6級失能或長期照顧狀態'});
+                    }
+                    else if (key === 'HTLTC') {
+                        let subList = [];
+                        for(let i=1; i<=15; i++) {
+                            subList.push(`第${i}次: ${format10K(amt * (1 + 0.02 * (i - 1)))}`);
+                        }
+                        details.push({title: '長照/完全失能一次保險金', value: `${format10K(amt)}`});
+                        details.push({title: '長照/完全失能分期保險金 (單利2%遞增, 最高15次)', value: '', subList: subList, footer: `合計總金額: ${format10K(amt * 17.1)}`});
+                        details.push({title: '豁免保費', value: '達1~6級失能或長期照顧狀態'});
+                    }
+                    else if (key === 'HPLTC') {
+                        let subList = [];
+                        for(let i=1; i<=15; i++) {
+                            subList.push(`第${i}次: ${format10K(amt * (1 + 0.02 * (i - 1)))}`);
+                        }
+                        details.push({title: '長照/完全失能一次保險金', value: `預估 ${format10K(totalPremium * 1.03 / 10000)} (擇高: 年繳保費總和1.03倍)`});
+                        details.push({title: '長照/完全失能分期保險金 (單利2%遞增, 最高15次)', value: '', subList: subList, footer: `合計總金額: ${format10K(amt * 17.1)}`});
+                        details.push({title: '身故/祝壽保險金', value: `預估 ${format10K(totalPremium * 1.03 / 10000)} (扣除已領)`});
+                        details.push({title: '豁免保費', value: '達2~6級失能或長期照顧狀態'});
+                    }
+                    else if (key === 'HRLTC3') {
+                        let subList = [];
+                        let subList2 = [];
+                        for(let i=1; i<=15; i++) {
+                            subList.push(`第${i}次: ${format10K(amt * (1 + 0.02 * (i - 1)))}`);
+                            subList2.push(`第${i}次: ${format10K(amt * 0.1 * (1 + 0.02 * (i - 1)))}`);
+                        }
+                        details.push({title: '長照/完全失能一次保險金', value: `${format10K(amt * 0.5)}`});
+                        details.push({title: '長照/完全失能輔具補助', value: `${format10K(amt * 0.25)}`});
+                        details.push({title: '長照/完全失能喘息服務 (單利2%遞增, 最高15次)', value: '', subList: subList2, footer: `合計總金額: ${format10K(amt * 0.1 * 17.1)}`});
+                        details.push({title: '長照/完全失能分期保險金 (單利2%遞增, 最高15次)', value: '', subList: subList, footer: `合計總金額: ${format10K(amt * 17.1)}`});
+                        details.push({title: '身故/祝壽保險金', value: '壽險當年度保險金額 (須扣除已給付保險金)'});
+                        details.push({title: '豁免保費', value: '達1~6級失能或長期照顧狀態'});
+                    }
+
+                    return details;
+                }
+            },
+            watch: {
+                age() {
+                    this.selectedProducts = this.selectedProducts.filter(key => this.hasRate(key));
+                },
+                gender() {
+                    this.selectedProducts = this.selectedProducts.filter(key => this.hasRate(key));
+                },
+                paymentTerm() {
+                    this.selectedProducts = this.selectedProducts.filter(key => this.hasRate(key));
+                }
+            }
+        }).mount('#app')
+    </script>
+</body>
+</html>
