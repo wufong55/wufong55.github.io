@@ -147,6 +147,7 @@
                 <label for="switch-bva3-zero">🔴 淨值<8 (不撥回)</label>
             </div>
             <div class="result-value highlight" id="out-payout">0</div>
+            <div class="info-text" id="out-payout-annual" style="color: #ea580c; font-weight: bold; margin-top: 5px;"></div>
             <div class="info-text" id="out-payout-quarterly" style="display: none; color: #9333ea; font-weight: bold; margin-top: 8px;"></div>
             <div class="info-text" id="out-payout-desc">請點擊上方按鈕，模擬不同淨值區間的現金流變化。</div>
         </div>
@@ -171,10 +172,10 @@
 
     // 儲存各頁籤的最後試算結果與日誌
     let tabMemory = {
-        'tab-init': { units: 0, nav: 10, log: '請執行建立帳戶' },
-        'tab-redeem': { units: 0, nav: 10, log: '尚未執行贖回試算' },
-        'tab-topup': { units: 0, nav: 10, log: '尚未執行增額試算' },
-        'tab-bonus': { units: 0, nav: 10, log: '尚未執行加值給付試算' }
+        'tab-init': { units: 0, nav: 10, premium: 0, log: '請執行建立帳戶' },
+        'tab-redeem': { units: 0, nav: 10, premium: 0, log: '尚未執行贖回試算' },
+        'tab-topup': { units: 0, nav: 10, premium: 0, log: '尚未執行增額試算' },
+        'tab-bonus': { units: 0, nav: 10, premium: 0, log: '尚未執行加值給付試算' }
     };
 
     function toggleInitMode() {
@@ -249,6 +250,8 @@
     // 重新計算撥息 (針對當前頁籤的 units 狀態)
     function recalculatePayout() {
         const activeUnits = tabMemory[globalState.currentActiveTab].units;
+        const currentNav = tabMemory[globalState.currentActiveTab].nav;
+        
         let selectedRate = 0;
         if (globalState.product === 'BVA1.2') {
             selectedRate = parseFloat(document.querySelector('input[name="payout-rate"]:checked').value);
@@ -263,6 +266,11 @@
         if (selectedRate === 0.042 || selectedRate === 0.092) { payoutDisplay.style.color = "#059669"; } 
         else if (selectedRate === 0.036) { payoutDisplay.style.color = "#d97706"; } 
         else { payoutDisplay.style.color = "#dc2626"; } 
+
+        // 處理年化撥回率
+        const currentPremium = tabMemory[globalState.currentActiveTab].premium || globalState.basePremiumPaid;
+        const annualRate = currentPremium > 0 ? ((payoutAmt * 12) / currentPremium) * 100 : 0;
+        document.getElementById('out-payout-annual').innerText = `📈 預估年化撥回率：約 ${annualRate.toFixed(2)}% (依投入金額計算)`;
 
         // 處理 BVA1.2 季加碼給付
         const qEl = document.getElementById('out-payout-quarterly');
@@ -332,10 +340,10 @@
         globalState.basePremiumPaid = initPremium;
 
         // 更新 init 頁籤記憶，並重置其他頁籤以防舊數據混淆
-        tabMemory['tab-init'] = { units: initUnits, nav: nav, log: log };
-        tabMemory['tab-redeem'] = { units: initUnits, nav: nav, log: '尚未執行贖回試算' };
-        tabMemory['tab-topup'] = { units: initUnits, nav: nav, log: '尚未執行增額試算' };
-        tabMemory['tab-bonus'] = { units: initUnits, nav: nav, log: '尚未執行加值給付試算' };
+        tabMemory['tab-init'] = { units: initUnits, nav: nav, premium: initPremium, log: log };
+        tabMemory['tab-redeem'] = { units: initUnits, nav: nav, premium: initPremium, log: '尚未執行贖回試算' };
+        tabMemory['tab-topup'] = { units: initUnits, nav: nav, premium: initPremium, log: '尚未執行增額試算' };
+        tabMemory['tab-bonus'] = { units: initUnits, nav: nav, premium: initPremium, log: '尚未執行加值給付試算' };
 
         if (globalState.product === 'BVA1.2') {
             document.getElementById('switch-high').checked = true; 
@@ -360,10 +368,11 @@
 
         // ★ 重點：從 baseUnits 扣減，不覆蓋 baseUnits，只存入 redeem 記憶體
         const simulatedUnits = globalState.baseUnits - deductUnits;
+        const simulatedPremium = Math.max(0, globalState.basePremiumPaid - redeemAmt);
         
         const log = `<strong>【沙盤推演：部分贖回 (${globalState.product})】</strong><br>扣減單位數：${deductUnits.toLocaleString('en-US', {maximumFractionDigits: 2})} 單位 (贖回淨值 ${nav})<br>解約費用率：${(surrenderRate * 100)}%<br><span style="color:#dc2626; font-weight:bold;">客戶實際入帳：${globalState.currencySymbol}${netCash.toLocaleString()}</span>`;
         
-        tabMemory['tab-redeem'] = { units: simulatedUnits, nav: nav, log: log };
+        tabMemory['tab-redeem'] = { units: simulatedUnits, nav: nav, premium: simulatedPremium, log: log };
         renderDashboard('tab-redeem');
     }
 
@@ -386,7 +395,7 @@
         
         const log = `<strong>【沙盤推演：增額投入 (${globalState.product})】</strong><br>增額保費：${globalState.currencySymbol}${topupAmt.toLocaleString()} (適用費率 ${(feeRate*100).toFixed(1)}%)<br><span style="color:#059669;">新增單位數：${addUnits.toLocaleString('en-US', {maximumFractionDigits: 2})} 單位 (增額淨值 ${nav})</span>`;
         
-        tabMemory['tab-topup'] = { units: simulatedUnits, nav: nav, log: log };
+        tabMemory['tab-topup'] = { units: simulatedUnits, nav: nav, premium: simulatedTotalPremium, log: log };
         renderDashboard('tab-topup');
     }
 
@@ -403,7 +412,7 @@
         
         const log = `<strong>【沙盤推演：加值給付 (${globalState.product})】</strong><br>給付金額 (經理費回饋)：${globalState.currencySymbol}${bonusCashAmount.toLocaleString()} (以 0.5% 計算)<br><span style="color:#9333ea; font-weight:bold;">自動轉入單位數：+${addUnits.toLocaleString('en-US', {maximumFractionDigits: 2})} 單位 (購入淨值 ${nav})</span>`;
         
-        tabMemory['tab-bonus'] = { units: simulatedUnits, nav: nav, log: log };
+        tabMemory['tab-bonus'] = { units: simulatedUnits, nav: nav, premium: globalState.basePremiumPaid, log: log };
         renderDashboard('tab-bonus');
     }
 
