@@ -2,28 +2,62 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>互動式足球戰術板</title>
+
+    <!-- iOS 全螢幕 PWA 設定 -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="教練戰術板">
+    <meta name="theme-color" content="#1f2937">
+    <!-- 內嵌 SVG 圖示與單一檔案 Web Manifest -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'%3E%3Crect width='120' height='120' rx='26' fill='%23276749'/%3E%3Crect x='10' y='10' width='100' height='100' rx='8' fill='none' stroke='white' stroke-width='4'/%3E%3Ccircle cx='60' cy='60' r='22' fill='none' stroke='white' stroke-width='4'/%3E%3Cline x1='60' y1='10' x2='60' y2='110' stroke='white' stroke-width='4'/%3E%3C/svg%3E">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'%3E%3Crect width='120' height='120' fill='%23276749'/%3E%3Crect x='12' y='12' width='96' height='96' rx='6' fill='none' stroke='white' stroke-width='5'/%3E%3Ccircle cx='60' cy='60' r='20' fill='none' stroke='white' stroke-width='5'/%3E%3Cline x1='60' y1='12' x2='60' y2='108' stroke='white' stroke-width='5'/%3E%3C/svg%3E">
+    <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22%E6%95%99%E7%B7%B4%E6%88%B0%E8%A1%93%E6%9D%BF%22%2C%22short_name%22%3A%22%E6%88%B0%E8%A1%93%E6%9D%BF%22%2C%22display%22%3A%22standalone%22%2C%22orientation%22%3A%22landscape%22%2C%22background_color%22%3A%22%231f2937%22%2C%22theme_color%22%3A%22%231f2937%22%7D">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
             overscroll-behavior: none;
             font-family: 'Inter', sans-serif;
-            touch-action: manipulation;
+            touch-action: none;
             -webkit-user-select: none;
             user-select: none;
+            /* 支援 iOS 全螢幕安全區域 */
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+            padding-left: env(safe-area-inset-left);
+            padding-right: env(safe-area-inset-right);
+        }
+
+        /* 戰術板外層視窗：負責裁切與雙指縮放平移容器 */
+        .pitch-viewport {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            touch-action: none;
         }
         
+        /*
+         * FIFA 標準 11 人制球場比例校正：
+         * 標準長度 105m × 寬度 68m -> 長寬比 105 / 68 ≈ 1.5441 : 1
+         */
         .pitch-container {
             position: relative;
             width: 100%;
-            aspect-ratio: 1.5 / 1;
+            aspect-ratio: 105 / 68;
             background: repeating-linear-gradient(90deg, #2f855a, #2f855a 10%, #276749 10%, #276749 20%);
             border: 4px solid white;
             overflow: hidden;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.35);
             touch-action: none;
-            container-type: size;
+            transform-origin: center center;
+            will-change: transform;
         }
 
         .line {
@@ -31,16 +65,41 @@
             border: 2px solid rgba(255, 255, 255, 0.85);
             pointer-events: none; 
         }
+        /* 中線 */
         .half-way-line { top: 0; bottom: 0; left: 50%; transform: translateX(-50%); border-left: 2px solid rgba(255, 255, 255, 0.85); border-top: none; border-bottom: none; border-right: none; }
-        .center-circle { top: 50%; left: 50%; width: 20%; aspect-ratio: 1 / 1; transform: translate(-50%, -50%); border-radius: 50%; }
-        .center-spot { top: 50%; left: 50%; width: 1%; aspect-ratio: 1 / 1; transform: translate(-50%, -50%); background-color: rgba(255, 255, 255, 0.85); border-radius: 50%; border: none; }
-        .penalty-box-left { top: 20%; bottom: 20%; left: 0; width: 16.5%; border-left: none; }
-        .penalty-box-right { top: 20%; bottom: 20%; right: 0; width: 16.5%; border-right: none; }
-        .goal-box-left { top: 36%; bottom: 36%; left: 0; width: 5.5%; border-left: none; }
-        .goal-box-right { top: 36%; bottom: 36%; right: 0; width: 5.5%; border-right: none; }
-        /* 球門高度佔球場寬度 12% (44% ~ 56%)，貼近標準球門 7.32m 與球場寬度比例 */
-        .goal-left { top: 44%; bottom: 44%; left: 0; width: 1.4%; border-left: none; border-color: #fde047; border-width: 3px; background: rgba(255,255,255,0.22); }
-        .goal-right { top: 44%; bottom: 44%; right: 0; width: 1.4%; border-right: none; border-color: #fde047; border-width: 3px; background: rgba(255,255,255,0.22); }
+        /* 中圈：半徑 9.15m (直徑 18.3m) / 105m = 17.43% */
+        .center-circle { top: 50%; left: 50%; width: 17.43%; aspect-ratio: 1 / 1; transform: translate(-50%, -50%); border-radius: 50%; }
+        .center-spot { top: 50%; left: 50%; width: 0.9%; aspect-ratio: 1 / 1; transform: translate(-50%, -50%); background-color: rgba(255, 255, 255, 0.9); border-radius: 50%; border: none; }
+
+        /*
+         * 大禁區 (Penalty Area)：
+         * 深度 16.5m / 105m = 15.71%
+         * 寬度 40.32m / 68m = 59.29% -> 上下邊距各 (100% - 59.29%) / 2 = 20.35%
+         */
+        .penalty-box-left { top: 20.35%; bottom: 20.35%; left: 0; width: 15.71%; border-left: none; }
+        .penalty-box-right { top: 20.35%; bottom: 20.35%; right: 0; width: 15.71%; border-right: none; }
+
+        /*
+         * 小禁區 / 球門區 (Goal Area)：
+         * 深度 5.5m / 105m = 5.24%
+         * 寬度 18.32m / 68m = 26.94% -> 上下邊距各 (100% - 26.94%) / 2 = 36.53%
+         */
+        .goal-box-left { top: 36.53%; bottom: 36.53%; left: 0; width: 5.24%; border-left: none; }
+        .goal-box-right { top: 36.53%; bottom: 36.53%; right: 0; width: 5.24%; border-right: none; }
+
+        /*
+         * 12 碼罰球點 (Penalty Spot)：
+         * 距離球門線 11m / 105m = 10.48%
+         */
+        .penalty-spot-left { top: 50%; left: 10.48%; width: 0.8%; aspect-ratio: 1 / 1; transform: translate(-50%, -50%); background-color: rgba(255, 255, 255, 0.9); border-radius: 50%; border: none; }
+        .penalty-spot-right { top: 50%; right: 10.48%; width: 0.8%; aspect-ratio: 1 / 1; transform: translate(50%, -50%); background-color: rgba(255, 255, 255, 0.9); border-radius: 50%; border: none; }
+
+        /*
+         * 球門 (Goal)：
+         * 標準寬度 7.32m / 68m = 10.76% -> 上下邊距各 (100% - 10.76%) / 2 = 44.62%
+         */
+        .goal-left { top: 44.62%; bottom: 44.62%; left: 0; width: 1.3%; border-left: none; border-color: #fde047; border-width: 3px; background: rgba(255,255,255,0.24); }
+        .goal-right { top: 44.62%; bottom: 44.62%; right: 0; width: 1.3%; border-right: none; border-color: #fde047; border-width: 3px; background: rgba(255,255,255,0.24); }
 
         .token {
             position: absolute;
@@ -77,13 +136,12 @@
 
         /*
          * 守門員 (GK) 真實比例設計：
-         * 標準球門寬 7.32m (佔畫布高 12%)，真人守門員張開雙臂約 1.6m~1.8m (約佔球門寬度的 1/4.5，即畫布高度的 2.6%)
-         * 視覺圓點採用真實比例 (約 18px)，外圈虛線代表守門員雙臂展開封堵範圍
+         * 標準球門寬 7.32m (佔畫布高 10.76%)，真人守門員張開雙臂約 1.6m~1.8m (約佔球門寬度的 23%)
          */
         .gk-token {
-            width: 18px;
-            height: 18px;
-            font-size: 10px;
+            width: 17px;
+            height: 17px;
+            font-size: 9px;
             border-width: 1.5px;
             box-shadow: 0 0 0 3px rgba(250, 204, 21, 0.35), 0 3px 5px rgba(0, 0, 0, 0.5);
         }
@@ -132,8 +190,8 @@
 
         /* 畫筆顏色按鈕選中狀態 */
         .color-swatch {
-            width: 26px;
-            height: 26px;
+            width: 24px;
+            height: 24px;
             border-radius: 50%;
             border: 2px solid rgba(0,0,0,0.2);
             transition: transform 0.15s ease, box-shadow 0.15s ease;
@@ -145,81 +203,91 @@
 
         @media (max-width: 600px) {
             .token { width: 24px; height: 24px; font-size: 11px; }
-            .gk-token { width: 14px; height: 14px; font-size: 8px; }
+            .gk-token { width: 13px; height: 13px; font-size: 8px; }
             .ball-token { font-size: 20px; }
             .name-label { font-size: 9px; bottom: -16px; }
         }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen flex flex-col">
+<body class="bg-gray-900 min-h-screen h-screen flex flex-col overflow-hidden">
 
     <!-- 頂部控制列 -->
-    <header class="bg-white shadow-md p-3 md:p-4 flex flex-wrap gap-3 items-center justify-between sticky top-0 z-50">
-        <div>
-            <h1 class="text-lg md:text-2xl font-bold text-gray-800">教練戰術板</h1>
-            <p class="text-xs md:text-sm text-gray-500">支援自由手繪箭頭、3 色畫筆、真實比例守門員與防守遮擋陰影計算</p>
+    <header class="bg-white shadow-md px-3 py-2.5 md:px-4 md:py-3 flex flex-wrap gap-2.5 items-center justify-between z-50 shrink-0">
+        <div class="flex items-center gap-3">
+            <div>
+                <h1 class="text-base md:text-xl font-bold text-gray-800 leading-tight">教練戰術板</h1>
+                <p class="text-[11px] md:text-xs text-gray-500">單指畫線/拖曳・雙指縮放平移・本機自動儲存</p>
+            </div>
         </div>
         
-        <div class="flex flex-wrap items-center gap-2.5">
+        <div class="flex flex-wrap items-center gap-2">
             <!-- 賽制切換 -->
-            <div class="bg-gray-200 p-1 rounded-lg flex text-sm font-medium">
-                <button id="btn-11v11" class="px-2.5 py-1.5 rounded-md bg-white shadow text-gray-800 transition-all">11 人制</button>
-                <button id="btn-5v5" class="px-2.5 py-1.5 rounded-md text-gray-600 hover:text-gray-800 transition-all">5 人制</button>
+            <div class="bg-gray-200 p-0.5 rounded-lg flex text-xs md:text-sm font-medium">
+                <button id="btn-11v11" class="px-2.5 py-1 rounded-md bg-white shadow text-gray-800 transition-all">11 人制</button>
+                <button id="btn-5v5" class="px-2.5 py-1 rounded-md text-gray-600 hover:text-gray-800 transition-all">5 人制</button>
             </div>
             
             <!-- 防守視角 + 遮擋陰影 -->
-            <button id="btn-fov" class="bg-yellow-400 hover:bg-yellow-500 text-yellow-900 px-3 py-1.5 rounded-lg shadow transition-colors text-sm font-bold flex items-center gap-1">
-                👁️ 防守視角 & 遮擋
+            <button id="btn-fov" class="bg-yellow-400 hover:bg-yellow-500 text-yellow-900 px-2.5 py-1.5 rounded-lg shadow transition-colors text-xs md:text-sm font-bold flex items-center gap-1">
+                👁️ 防守視角
             </button>
 
             <!-- 模式切換 -->
-            <button id="btn-mode-move" class="bg-blue-600 text-white px-3 py-1.5 rounded-lg shadow transition-colors text-sm font-medium">
-                ✋ 拖曳球員
+            <button id="btn-mode-move" class="bg-blue-600 text-white px-2.5 py-1.5 rounded-lg shadow transition-colors text-xs md:text-sm font-medium">
+                ✋ 拖曳
             </button>
-            <button id="btn-draw-line" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 py-1.5 rounded-lg shadow transition-colors text-sm font-medium">
+            <button id="btn-draw-line" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-2.5 py-1.5 rounded-lg shadow transition-colors text-xs md:text-sm font-medium">
                 ━ 純實線
             </button>
-            <button id="btn-draw-solid" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 py-1.5 rounded-lg shadow transition-colors text-sm font-medium">
+            <button id="btn-draw-solid" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-2.5 py-1.5 rounded-lg shadow transition-colors text-xs md:text-sm font-medium">
                 ➔ 實線箭頭
             </button>
-            <button id="btn-draw-dashed" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 py-1.5 rounded-lg shadow transition-colors text-sm font-medium">
+            <button id="btn-draw-dashed" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-2.5 py-1.5 rounded-lg shadow transition-colors text-xs md:text-sm font-medium">
                 ⇢ 虛線箭頭
             </button>
 
             <!-- 3 種顏色畫筆選擇器 -->
-            <div class="flex items-center gap-2 bg-gray-100 border border-gray-300 px-2.5 py-1 rounded-lg" title="選擇畫筆顏色">
-                <span class="text-xs text-gray-600 font-medium">畫筆：</span>
+            <div class="flex items-center gap-1.5 bg-gray-100 border border-gray-300 px-2 py-1 rounded-lg" title="選擇畫筆顏色">
                 <button type="button" data-color="#ffffff" class="color-swatch active" style="background-color: #ffffff;" title="純白"></button>
                 <button type="button" data-color="#fde047" class="color-swatch" style="background-color: #fde047;" title="戰術黃"></button>
                 <button type="button" data-color="#ff4d4f" class="color-swatch" style="background-color: #ff4d4f;" title="警戒紅"></button>
             </div>
 
-            <button id="btn-undo-arrow" class="bg-gray-400 hover:bg-gray-500 text-white px-2.5 py-1.5 rounded-lg shadow transition-colors text-sm font-medium">
+            <!-- 縮放控制 (支援雙指縮放與按鈕微調) -->
+            <div class="flex items-center bg-gray-100 border border-gray-300 rounded-lg overflow-hidden text-xs font-medium">
+                <button id="btn-zoom-out" class="px-2 py-1.5 hover:bg-gray-200 text-gray-700" title="縮小">－</button>
+                <button id="btn-zoom-reset" class="px-2 py-1.5 hover:bg-gray-200 text-gray-800 border-x border-gray-300 min-w-[48px]" title="點擊重置為 100%">100%</button>
+                <button id="btn-zoom-in" class="px-2 py-1.5 hover:bg-gray-200 text-gray-700" title="放大">＋</button>
+            </div>
+
+            <button id="btn-undo-arrow" class="bg-gray-400 hover:bg-gray-500 text-white px-2.5 py-1.5 rounded-lg shadow transition-colors text-xs md:text-sm font-medium">
                 ↩ 復原
             </button>
-            <button id="btn-clear-arrows" class="bg-gray-500 hover:bg-gray-600 text-white px-2.5 py-1.5 rounded-lg shadow transition-colors text-sm font-medium">
+            <button id="btn-clear-arrows" class="bg-gray-500 hover:bg-gray-600 text-white px-2.5 py-1.5 rounded-lg shadow transition-colors text-xs md:text-sm font-medium">
                 清空線條
             </button>
-            <button id="btn-reset" class="bg-red-500 hover:bg-red-600 text-white px-2.5 py-1.5 rounded-lg shadow transition-colors text-sm font-medium">
+            <button id="btn-reset" class="bg-red-500 hover:bg-red-600 text-white px-2.5 py-1.5 rounded-lg shadow transition-colors text-xs md:text-sm font-medium">
                 重設站位
             </button>
         </div>
     </header>
 
-    <!-- 戰術板主區域 -->
-    <main class="flex-grow p-3 md:p-6 flex items-center justify-center">
+    <!-- 戰術板主區域 (支援雙指縮放與平移) -->
+    <main id="pitch-viewport" class="pitch-viewport flex-grow p-2 md:p-6">
         <div id="pitch" class="pitch-container rounded-lg w-full max-w-5xl">
             <div class="line half-way-line"></div>
             <div class="line center-circle"></div>
             <div class="line center-spot"></div>
             <div class="line penalty-box-left"></div>
             <div class="line goal-box-left"></div>
+            <div class="line penalty-spot-left"></div>
             <div class="line goal-left"></div>
             <div class="line penalty-box-right"></div>
             <div class="line goal-box-right"></div>
+            <div class="line penalty-spot-right"></div>
             <div class="line goal-right"></div>
             
-            <!-- 高解析度 Canvas 繪圖層 -->
+            <!-- 高解析度 Canvas 繪圖層 (含禁區弧頂與戰術線條) -->
             <canvas id="drawing-canvas"></canvas>
             
             <div id="tokens-layer" style="width: 100%; height: 100%; position: absolute; pointer-events: none;"></div>
@@ -253,8 +321,20 @@
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
+        // =======================
+        // localStorage 本機自動儲存 Key
+        // =======================
+        const LS_NAMES_KEY = 'wufonglee_tactics_player_names_v1';
+        const LS_BOARD_STATE_KEY = 'wufonglee_tactics_board_state_v1';
+
         let db, auth;
         let playerNames = {};
+
+        // 啟動時先從本機 localStorage 載入球員姓名
+        try {
+            const savedNames = localStorage.getItem(LS_NAMES_KEY);
+            if (savedNames) playerNames = JSON.parse(savedNames);
+        } catch (e) { console.warn("Failed to read names from localStorage:", e); }
 
         if (Object.keys(firebaseConfig).length > 0) {
             const app = initializeApp(firebaseConfig);
@@ -276,13 +356,17 @@
             const namesRef = doc(db, 'artifacts', appId, 'public', 'data', 'playerNames', 'current');
             onSnapshot(namesRef, (docSnap) => {
                 if (docSnap.exists()) {
-                    playerNames = docSnap.data();
+                    playerNames = { ...playerNames, ...docSnap.data() };
+                    localStorage.setItem(LS_NAMES_KEY, JSON.stringify(playerNames));
                     updateAllTokensText();
                 }
             }, (err) => console.warn("Firestore error:", err));
         }
 
         async function saveNameToDB() {
+            try {
+                localStorage.setItem(LS_NAMES_KEY, JSON.stringify(playerNames));
+            } catch (e) { console.warn("localStorage save failed:", e); }
             updateAllTokensText();
             if (!auth?.currentUser) return;
             const namesRef = doc(db, 'artifacts', appId, 'public', 'data', 'playerNames', 'current');
@@ -290,24 +374,31 @@
         }
 
         // =======================
-        // 核心狀態
+        // 核心狀態與 FIFA 標準比例常數
         // =======================
+        const pitchViewport = document.getElementById('pitch-viewport');
         const pitch = document.getElementById('pitch');
         const canvas = document.getElementById('drawing-canvas');
         const ctx = canvas.getContext('2d');
         const tokensLayer = document.getElementById('tokens-layer');
 
         let currentMode = '11v11';
-        let interactionMode = 'move'; // 'move', 'draw-solid', 'draw-dashed'
-        let currentPenColor = '#ffffff'; // 預設白色畫筆
+        let interactionMode = 'move'; // 'move', 'draw-line', 'draw-solid', 'draw-dashed'
+        let currentPenColor = '#ffffff';
         let fovActive = false;
-        // 自由軌跡箭頭結構: { id, type: 'solid'|'dashed', color: string, points: [{x, y}, ...] }
         let arrows = [];
         let ballState = { pos: [50, 50], el: null };
 
-        // 球門上下門柱 Y 軸百分比 (44% ~ 56%，佔球場寬度 12%)
-        const GOAL_TOP_PCT = 44;
-        const GOAL_BOTTOM_PCT = 56;
+        // 雙指縮放與平移狀態
+        let boardScale = 1;
+        let boardTranslate = { x: 0, y: 0 };
+        const MIN_SCALE = 0.75;
+        const MAX_SCALE = 2.8;
+
+        // FIFA 標準球門上下門柱 Y 軸百分比：
+        // 球門寬 7.32m / 球場寬 68m = 10.76% -> 44.62% ~ 55.38%
+        const GOAL_TOP_PCT = 44.62;
+        const GOAL_BOTTOM_PCT = 55.38;
 
         const formations = {
             '11v11': {
@@ -320,14 +411,77 @@
             }
         };
 
+        // 儲存與讀取整個戰術板狀態至 localStorage
+        function saveBoardStateToLocal() {
+            try {
+                const positions = {};
+                document.querySelectorAll('.token').forEach(el => {
+                    positions[el.dataset.id] = [
+                        parseFloat(el.style.left),
+                        parseFloat(el.style.top)
+                    ];
+                });
+                const state = {
+                    currentMode,
+                    fovActive,
+                    arrows,
+                    positions
+                };
+                localStorage.setItem(LS_BOARD_STATE_KEY, JSON.stringify(state));
+            } catch (e) { console.warn("Failed to save board state:", e); }
+        }
+
+        function loadBoardStateFromLocal() {
+            try {
+                const raw = localStorage.getItem(LS_BOARD_STATE_KEY);
+                if (!raw) return null;
+                return JSON.parse(raw);
+            } catch (e) {
+                return null;
+            }
+        }
+
         // =======================
-        // devicePixelRatio 1:1 畫布校正
+        // 雙指縮放與平移視覺更新
+        // =======================
+        function applyBoardTransform() {
+            // 限制平移範圍，避免把戰術板拖出畫面外
+            const maxOffsetX = (pitch.clientWidth * boardScale) * 0.45;
+            const maxOffsetY = (pitch.clientHeight * boardScale) * 0.45;
+            boardTranslate.x = Math.max(-maxOffsetX, Math.min(maxOffsetX, boardTranslate.x));
+            boardTranslate.y = Math.max(-maxOffsetY, Math.min(maxOffsetY, boardTranslate.y));
+
+            pitch.style.transform = `translate3d(${boardTranslate.x}px, ${boardTranslate.y}px, 0) scale(${boardScale})`;
+            document.getElementById('btn-zoom-reset').innerText = `${Math.round(boardScale * 100)}%`;
+        }
+
+        function setZoom(newScale, centerX = null, centerY = null) {
+            const prevScale = boardScale;
+            boardScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, newScale));
+
+            if (centerX !== null && centerY !== null && prevScale !== boardScale) {
+                const rect = pitch.getBoundingClientRect();
+                const pitchCenterX = rect.left + rect.width / 2;
+                const pitchCenterY = rect.top + rect.height / 2;
+                const ratio = boardScale / prevScale;
+                boardTranslate.x -= (centerX - pitchCenterX) * (ratio - 1);
+                boardTranslate.y -= (centerY - pitchCenterY) * (ratio - 1);
+            }
+            if (Math.abs(boardScale - 1) < 0.03) {
+                boardScale = 1;
+                boardTranslate = { x: 0, y: 0 };
+            }
+            applyBoardTransform();
+        }
+
+        // =======================
+        // devicePixelRatio 1:1 畫布校正 (相容任意縮放倍率)
         // =======================
         let canvasLogicalWidth = 0;
         let canvasLogicalHeight = 0;
 
         function resizeCanvas() {
-            const dpr = window.devicePixelRatio || 1;
+            const dpr = (window.devicePixelRatio || 1) * 1.25; // 提升縮放時的清晰度
             const width = pitch.clientWidth;
             const height = pitch.clientHeight;
 
@@ -343,16 +497,17 @@
             renderCanvas();
         }
 
+        // 將觸控或滑鼠座標轉為精準畫布百分比與內部邏輯像素 (自動抵消 scale 縮放影響)
         function getPointerPos(e) {
             const touch = (e.touches && e.touches[0]) || (e.changedTouches && e.changedTouches[0]) || e;
             const rect = canvas.getBoundingClientRect();
-            const x = Math.max(0, Math.min(rect.width, touch.clientX - rect.left));
-            const y = Math.max(0, Math.min(rect.height, touch.clientY - rect.top));
+            const xPct = Math.max(0, Math.min(100, ((touch.clientX - rect.left) / rect.width) * 100));
+            const yPct = Math.max(0, Math.min(100, ((touch.clientY - rect.top) / rect.height) * 100));
             return {
-                x,
-                y,
-                xPct: (x / rect.width) * 100,
-                yPct: (y / rect.height) * 100
+                x: (xPct / 100) * canvasLogicalWidth,
+                y: (yPct / 100) * canvasLogicalHeight,
+                xPct,
+                yPct
             };
         }
 
@@ -360,9 +515,34 @@
         function py(pct) { return (pct / 100) * canvasLogicalHeight; }
 
         // =======================
+        // 繪製 FIFA 標準禁區弧頂 (D 字區，距離 12 碼點 9.15m)
+        // =======================
+        function renderPitchPenaltyArcs() {
+            // 12 碼點位於 11m / 105m = 10.48%，大禁區線位於 16.5m / 105m = 15.71%
+            // 罰球弧半徑 R = 9.15m / 105m = 8.714% 的球場長度
+            // 弧線與大禁區線交點夾角 cos(θ) = (16.5 - 11) / 9.15 = 5.5 / 9.15 -> θ ≈ 0.9259 rad (53.05°)
+            const arcRadiusPx = (9.15 / 105) * canvasLogicalWidth;
+            const halfArcAngle = Math.acos(5.5 / 9.15);
+
+            ctx.save();
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+            ctx.lineWidth = 2;
+
+            // 左禁區弧頂
+            ctx.beginPath();
+            ctx.arc(px(10.48), py(50), arcRadiusPx, -halfArcAngle, halfArcAngle, false);
+            ctx.stroke();
+
+            // 右禁區弧頂
+            ctx.beginPath();
+            ctx.arc(px(100 - 10.48), py(50), arcRadiusPx, Math.PI - halfArcAngle, Math.PI + halfArcAngle, false);
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        // =======================
         // 三角函數射門視角 + 防守球員遮擋陰影計算
         // =======================
-        // 合併重疊的角度區間，用於計算總遮擋角度
         function mergeIntervals(intervals) {
             if (intervals.length === 0) return [];
             const sorted = [...intervals].sort((a, b) => a[0] - b[0]);
@@ -391,8 +571,6 @@
             const postBottomY = py(GOAL_BOTTOM_PCT);
             const goalHeightPx = postBottomY - postTopY;
 
-            // 以指向球門的水平軸作為基準展開角度，避免在左球門 (-π / +π) 跨界時產生角度斷裂
-            // 定義 localAngle(x, y): 相對於「球指向球門中心方向」的夾角 (-π ~ π)
             const refDirX = isLeftGoal ? -1 : 1;
             function toLocalAngle(targetX, targetY) {
                 const dx = (targetX - bx) * refDirX;
@@ -404,10 +582,8 @@
                 const dy = Math.sin(localRad);
                 return Math.atan2(dy, dx);
             }
-            // 由 localAngle 求該射線與球門線 (x = goalX) 的交點 Y 座標
             function intersectGoalLineY(localRad) {
                 const distToGoalX = Math.abs(goalX - bx);
-                const cosVal = Math.max(1e-4, Math.cos(localRad));
                 return by + distToGoalX * Math.tan(localRad);
             }
 
@@ -423,7 +599,7 @@
 
             ctx.save();
 
-            // 1. 繪製基礎射門黃金三角扇形區 (空檔區)
+            // 1. 繪製基礎射門黃金三角扇形區
             const grad = ctx.createRadialGradient(bx, by, 5, bx, by, Math.max(distTop, distBottom));
             grad.addColorStop(0, 'rgba(250, 204, 21, 0.45)');
             grad.addColorStop(1, 'rgba(250, 204, 21, 0.16)');
@@ -436,7 +612,6 @@
             ctx.fillStyle = grad;
             ctx.fill();
 
-            // 繪製兩側門柱射線
             ctx.strokeStyle = 'rgba(254, 240, 138, 0.85)';
             ctx.lineWidth = 2;
             ctx.setLineDash([6, 4]);
@@ -458,31 +633,27 @@
                 const cy = py(pyPct);
                 const isGK = tokenEl.classList.contains('gk-token');
 
-                // 只計算位於「球與目標球門之間」的球員
                 const isBetweenBallAndGoal = isLeftGoal ? (cx < bx - 2) : (cx > bx + 2);
                 if (!isBetweenBallAndGoal) return;
 
-                // 真實比例封堵半徑：
-                // 守門員展開雙臂約佔球門寬度 22% (半徑約 11% * goalHeightPx)
-                // 一般防守球員軀幹攔截寬度約佔球門寬度 14% (半徑約 7% * goalHeightPx)
-                const blockRadius = isGK ? (goalHeightPx * 0.115) : (goalHeightPx * 0.085);
+                // 依 FIFA 7.32m 球門比例計算封堵半徑：
+                // 守門員展開雙臂約 1.75m (約佔球門寬度 24%，半徑 12% * goalHeightPx)
+                // 場上球員軀幹攔截寬度約 1.1m (約佔球門寬度 15%，半徑 7.5% * goalHeightPx)
+                const blockRadius = isGK ? (goalHeightPx * 0.12) : (goalHeightPx * 0.08);
                 const distToPlayer = Math.hypot(cx - bx, cy - by);
                 if (distToPlayer <= blockRadius + 1) return;
 
-                // 利用反正弦函數 Math.asin(R / D) 求球員邊緣切線張角
                 const centerLocalAngle = toLocalAngle(cx, cy);
                 const halfSpread = Math.asin(Math.min(0.98, blockRadius / distToPlayer));
                 const pMin = centerLocalAngle - halfSpread;
                 const pMax = centerLocalAngle + halfSpread;
 
-                // 取與射門錐 [coneMin, coneMax] 的交集
                 const clampedMin = Math.max(coneMin, pMin);
                 const clampedMax = Math.min(coneMax, pMax);
 
                 if (clampedMax > clampedMin) {
                     blockedIntervals.push([clampedMin, clampedMax]);
 
-                    // 計算切點位置與投射在球門線上的陰影頂點
                     const tangentDist = Math.sqrt(distToPlayer * distToPlayer - blockRadius * blockRadius);
                     const gMin = localAngleToGlobal(clampedMin);
                     const gMax = localAngleToGlobal(clampedMax);
@@ -495,7 +666,6 @@
                     const goalY1 = Math.max(postTopY, Math.min(postBottomY, intersectGoalLineY(clampedMin)));
                     const goalY2 = Math.max(postTopY, Math.min(postBottomY, intersectGoalLineY(clampedMax)));
 
-                    // 繪製球員身後的遮擋陰影走廊 (深色半透明梯形)
                     ctx.setLineDash([]);
                     ctx.fillStyle = isGK ? 'rgba(239, 68, 68, 0.48)' : 'rgba(15, 23, 42, 0.52)';
                     ctx.beginPath();
@@ -506,7 +676,6 @@
                     ctx.closePath();
                     ctx.fill();
 
-                    // 繪製陰影邊界切線
                     ctx.strokeStyle = isGK ? 'rgba(252, 165, 165, 0.85)' : 'rgba(148, 163, 184, 0.75)';
                     ctx.lineWidth = 1.5;
                     ctx.setLineDash([3, 3]);
@@ -517,7 +686,6 @@
                     ctx.lineTo(goalX, goalY2);
                     ctx.stroke();
 
-                    // 在球門線上標出被封堵的門線區段 (紅線標示無法進球區)
                     ctx.setLineDash([]);
                     ctx.strokeStyle = '#ef4444';
                     ctx.lineWidth = 5;
@@ -526,7 +694,6 @@
                     ctx.lineTo(goalX, goalY2);
                     ctx.stroke();
 
-                    // 繪出該防守球員的有效攔截翼展範圍圓圈
                     ctx.strokeStyle = isGK ? '#fde047' : 'rgba(255,255,255,0.6)';
                     ctx.lineWidth = 1.5;
                     ctx.beginPath();
@@ -554,7 +721,7 @@
             const openDeg = (openRad * 180 / Math.PI).toFixed(1);
             const blockedPct = totalShotAngleRad > 1e-4 ? Math.round((blockedRad / totalShotAngleRad) * 100) : 0;
 
-            // 5. 繪製射門角弧與數據資訊面板 (顯示於球旁)
+            // 5. 繪製射門角弧與數據資訊面板（資訊面板置於視角反方向，完全不擋視角）
             const arcRadius = Math.min(54, Math.min(distTop, distBottom) * 0.32);
             if (arcRadius > 14) {
                 const gConeMin = localAngleToGlobal(coneMin);
@@ -565,40 +732,52 @@
                 ctx.beginPath();
                 ctx.arc(bx, by, arcRadius, gConeMin, gConeMax, isLeftGoal);
                 ctx.stroke();
-
-                const gBisect = localAngleToGlobal(bisectorLocal);
-                const labelDist = arcRadius + 46;
-                const labelX = Math.max(65, Math.min(canvasLogicalWidth - 65, bx + Math.cos(gBisect) * labelDist));
-                const labelY = Math.max(28, Math.min(canvasLogicalHeight - 28, by + Math.sin(gBisect) * labelDist));
-
-                const line1 = `有效空檔: ${openDeg}° / 總角 ${totalShotAngleDeg.toFixed(1)}°`;
-                const line2 = `防守封堵率: ${blockedPct}%`;
-
-                ctx.font = 'bold 11px Inter, sans-serif';
-                const boxW = Math.max(ctx.measureText(line1).width, ctx.measureText(line2).width) + 14;
-                const boxH = 34;
-
-                ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
-                ctx.beginPath();
-                ctx.roundRect(labelX - boxW / 2, labelY - boxH / 2, boxW, boxH, 6);
-                ctx.fill();
-                ctx.strokeStyle = 'rgba(253, 224, 71, 0.6)';
-                ctx.lineWidth = 1;
-                ctx.stroke();
-
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillStyle = '#fde047';
-                ctx.fillText(line1, labelX, labelY - 7);
-                ctx.fillStyle = blockedPct > 50 ? '#f87171' : '#a7f3d0';
-                ctx.fillText(line2, labelX, labelY + 8);
             }
+
+            const gBisect = localAngleToGlobal(bisectorLocal);
+            // 將數據面板放在射門視角的「反方向（另一側）」，完全不遮擋射門視角與防守球員
+            const oppositeAngle = gBisect + Math.PI;
+            const labelDist = 64;
+            const labelX = Math.max(75, Math.min(canvasLogicalWidth - 75, bx + Math.cos(oppositeAngle) * labelDist));
+            const labelY = Math.max(26, Math.min(canvasLogicalHeight - 26, by + Math.sin(oppositeAngle) * labelDist));
+
+            const line1 = `有效空檔: ${openDeg}° / 總角 ${totalShotAngleDeg.toFixed(1)}°`;
+            const line2 = `防守封堵率: ${blockedPct}%`;
+
+            ctx.font = 'bold 11px Inter, sans-serif';
+            const boxW = Math.max(ctx.measureText(line1).width, ctx.measureText(line2).width) + 14;
+            const boxH = 34;
+
+            // 繪製球到反方向資訊框的微細連接引線
+            ctx.strokeStyle = 'rgba(253, 224, 71, 0.45)';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([2, 2]);
+            ctx.beginPath();
+            ctx.moveTo(bx + Math.cos(oppositeAngle) * 14, by + Math.sin(oppositeAngle) * 14);
+            ctx.lineTo(labelX, labelY);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+            ctx.beginPath();
+            ctx.roundRect(labelX - boxW / 2, labelY - boxH / 2, boxW, boxH, 6);
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(253, 224, 71, 0.6)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = '#fde047';
+            ctx.fillText(line1, labelX, labelY - 7);
+            ctx.fillStyle = blockedPct > 50 ? '#f87171' : '#a7f3d0';
+            ctx.fillText(line2, labelX, labelY + 8);
 
             ctx.restore();
         }
 
         // =======================
-        // 自由曲線與 Math.atan2 即時箭頭繪製 (支援 3 種畫筆顏色)
+        // 自由曲線與 Math.atan2 即時箭頭繪製
         // =======================
         function drawFreehandArrow(arr) {
             const pts = arr.points;
@@ -642,11 +821,9 @@
             }
 
             if (arr.type === 'line') {
-                // 純實線（無箭頭）：直接連到終點
                 ctx.lineTo(endPt.x, endPt.y);
                 ctx.stroke();
             } else {
-                // 帶箭頭的實線或虛線：終點稍微內縮，再補上箭頭三角形
                 const lineEndX = endPt.x - Math.cos(angle) * (headLength * 0.5);
                 const lineEndY = endPt.y - Math.sin(angle) * (headLength * 0.5);
                 ctx.lineTo(lineEndX, lineEndY);
@@ -673,6 +850,7 @@
             if (!canvasLogicalWidth || !canvasLogicalHeight) return;
             ctx.clearRect(0, 0, canvasLogicalWidth, canvasLogicalHeight);
 
+            renderPitchPenaltyArcs();
             renderDefensiveFOV();
             arrows.forEach(arr => drawFreehandArrow(arr));
         }
@@ -680,18 +858,25 @@
         new ResizeObserver(() => resizeCanvas()).observe(pitch);
 
         // =======================
-        // 球員與球標記生成 (含真實比例守門員)
+        // 球員與球標記生成 (支援本機儲存還原)
         // =======================
-        function initBoard(mode) {
+        function initBoard(mode, savedPositions = null) {
             currentMode = mode;
             tokensLayer.innerHTML = '';
             
             const data = formations[mode];
-            data.red.forEach(p => createToken(p, 'team-red'));
-            data.blue.forEach(p => createToken(p, 'team-blue'));
+            data.red.forEach(p => {
+                const pos = (savedPositions && savedPositions[p.id]) ? savedPositions[p.id] : p.pos;
+                createToken({ ...p, currentPos: pos }, 'team-red');
+            });
+            data.blue.forEach(p => {
+                const pos = (savedPositions && savedPositions[p.id]) ? savedPositions[p.id] : p.pos;
+                createToken({ ...p, currentPos: pos }, 'team-blue');
+            });
             
-            ballState.pos = [50, 50];
-            ballState.el = createToken({ id: 'ball', num: '⚽', pos: ballState.pos }, 'ball-token');
+            const ballPos = (savedPositions && savedPositions['ball']) ? savedPositions['ball'] : [50, 50];
+            ballState.pos = [...ballPos];
+            ballState.el = createToken({ id: 'ball', num: '⚽', pos: [50, 50], currentPos: ballState.pos }, 'ball-token');
             
             updateTabUI();
             updateAllTokensText();
@@ -704,13 +889,14 @@
             el.classList.add('token', className);
             if (player.isGK) {
                 el.classList.add('gk-token');
-                el.title = '守門員 (已依真實人體與球門比例縮放)';
+                el.title = '守門員 (已依真實人體與 7.32m 球門比例縮放)';
             }
             el.dataset.id = player.id;
             el.dataset.defaultX = player.pos[0];
             el.dataset.defaultY = player.pos[1];
-            el.style.left = `${player.pos[0]}%`;
-            el.style.top = `${player.pos[1]}%`;
+            const initPos = player.currentPos || player.pos;
+            el.style.left = `${initPos[0]}%`;
+            el.style.top = `${initPos[1]}%`;
             el.style.pointerEvents = interactionMode === 'move' ? 'auto' : 'none';
             
             if (player.id === 'ball') {
@@ -746,13 +932,49 @@
         }
 
         // =======================
-        // 滑鼠 + 原生 Touch 雙支援互動邏輯
+        // 單指拖曳/畫線 + 雙指縮放平移 (Pinch-to-Zoom & Pan)
         // =======================
         let activeElement = null;
-        let activeType = null; // 'token' | 'drawing-arrow'
+        let activeType = null; // 'token' | 'drawing-arrow' | 'pinch-zoom'
         let currentDrawingArrow = null;
         let touchStartPos = { x: 0, y: 0 };
         let isDragging = false;
+
+        // 雙指縮放專用狀態
+        let pinchStartDist = 0;
+        let pinchStartScale = 1;
+        let pinchLastCenter = { x: 0, y: 0 };
+
+        function getTwoFingerMetrics(touches) {
+            const t1 = touches[0];
+            const t2 = touches[1];
+            return {
+                dist: Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY),
+                centerX: (t1.clientX + t2.clientX) / 2,
+                centerY: (t1.clientY + t2.clientY) / 2
+            };
+        }
+
+        function startPinchGesture(touches) {
+            // 若原本第一指剛觸發了畫線或點到球員，先取消該單指動作
+            if (activeType === 'drawing-arrow' && currentDrawingArrow) {
+                if (currentDrawingArrow.points.length <= 3) {
+                    arrows.pop();
+                    renderCanvas();
+                }
+                currentDrawingArrow = null;
+            }
+            if (activeType === 'token' && activeElement) {
+                if (activeElement.dataset.id !== 'ball') activeElement.style.zIndex = '20';
+                activeElement = null;
+            }
+
+            activeType = 'pinch-zoom';
+            const metrics = getTwoFingerMetrics(touches);
+            pinchStartDist = Math.max(10, metrics.dist);
+            pinchStartScale = boardScale;
+            pinchLastCenter = { x: metrics.centerX, y: metrics.centerY };
+        }
 
         ['gesturestart', 'gesturechange', 'gestureend'].forEach(evt => {
             document.addEventListener(evt, e => e.preventDefault(), { passive: false });
@@ -760,6 +982,11 @@
 
         function addTokenInteractions(el, id) {
             const startEvent = (e) => {
+                if (e.touches && e.touches.length >= 2) {
+                    if (e.cancelable) e.preventDefault();
+                    startPinchGesture(e.touches);
+                    return;
+                }
                 if (interactionMode !== 'move') return;
                 if (e.cancelable) e.preventDefault();
                 e.stopPropagation();
@@ -777,8 +1004,15 @@
         }
 
         const pitchStartEvent = (e) => {
-            if (!interactionMode.startsWith('draw')) return;
             if (e.cancelable) e.preventDefault();
+
+            // 偵測到雙指觸控 -> 立即進入雙指縮放平移模式
+            if (e.touches && e.touches.length >= 2) {
+                startPinchGesture(e.touches);
+                return;
+            }
+
+            if (!interactionMode.startsWith('draw')) return;
 
             const pos = getPointerPos(e);
             activeType = 'drawing-arrow';
@@ -798,10 +1032,34 @@
 
         pitch.addEventListener('mousedown', pitchStartEvent);
         pitch.addEventListener('touchstart', pitchStartEvent, { passive: false });
+        pitchViewport.addEventListener('touchstart', (e) => {
+            if (e.touches && e.touches.length >= 2) {
+                if (e.cancelable) e.preventDefault();
+                startPinchGesture(e.touches);
+            }
+        }, { passive: false });
 
         function handleGlobalMove(e) {
+            // 若在移動過程中變成雙指，自動切換至雙指縮放
+            if (e.touches && e.touches.length >= 2 && activeType !== 'pinch-zoom') {
+                startPinchGesture(e.touches);
+            }
             if (!activeType) return;
             if (e.cancelable) e.preventDefault();
+
+            if (activeType === 'pinch-zoom' && e.touches && e.touches.length >= 2) {
+                const metrics = getTwoFingerMetrics(e.touches);
+                const newScale = pinchStartScale * (metrics.dist / pinchStartDist);
+                boardScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, newScale));
+
+                // 同時支援雙指平移
+                boardTranslate.x += (metrics.centerX - pinchLastCenter.x);
+                boardTranslate.y += (metrics.centerY - pinchLastCenter.y);
+                pinchLastCenter = { x: metrics.centerX, y: metrics.centerY };
+
+                applyBoardTransform();
+                return;
+            }
 
             const pos = getPointerPos(e);
 
@@ -814,7 +1072,6 @@
                 if (activeElement.dataset.id === 'ball') {
                     ballState.pos = [pos.xPct, pos.yPct];
                 }
-                // 只要開啟防守視角，無論移動球、守門員或防守球員都即時重算遮擋陰影！
                 if (fovActive) renderCanvas();
             } else if (activeType === 'drawing-arrow' && currentDrawingArrow) {
                 const pts = currentDrawingArrow.points;
@@ -829,6 +1086,15 @@
 
         function handleGlobalEnd(e) {
             if (!activeType) return;
+
+            // 若雙指縮放只放開一指，等待全部手指離開再結束狀態
+            if (activeType === 'pinch-zoom') {
+                if (!e.touches || e.touches.length === 0) {
+                    activeType = null;
+                }
+                return;
+            }
+
             if (e.type === 'touchend' && e.cancelable) e.preventDefault();
 
             if (activeType === 'token' && activeElement) {
@@ -838,6 +1104,7 @@
                 if (activeElement.dataset.id !== 'ball') {
                     activeElement.style.zIndex = '20';
                 }
+                saveBoardStateToLocal();
             } else if (activeType === 'drawing-arrow' && currentDrawingArrow) {
                 const pts = currentDrawingArrow.points;
                 if (pts.length < 2) {
@@ -851,6 +1118,7 @@
                     }
                 }
                 renderCanvas();
+                saveBoardStateToLocal();
             }
 
             activeElement = null;
@@ -864,6 +1132,22 @@
         document.addEventListener('touchend', handleGlobalEnd, { passive: false });
         document.addEventListener('touchcancel', handleGlobalEnd, { passive: false });
 
+        // 支援電腦滑鼠滾輪縮放戰術板
+        pitchViewport.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const delta = e.deltaY < 0 ? 0.12 : -0.12;
+            setZoom(boardScale + delta, e.clientX, e.clientY);
+        }, { passive: false });
+
+        // 縮放按鈕事件
+        document.getElementById('btn-zoom-in').addEventListener('click', () => setZoom(boardScale + 0.2));
+        document.getElementById('btn-zoom-out').addEventListener('click', () => setZoom(boardScale - 0.2));
+        document.getElementById('btn-zoom-reset').addEventListener('click', () => {
+            boardScale = 1;
+            boardTranslate = { x: 0, y: 0 };
+            applyBoardTransform();
+        });
+
         // =======================
         // UI 操作事件與畫筆選色
         // =======================
@@ -872,7 +1156,6 @@
                 document.querySelectorAll('.color-swatch').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 currentPenColor = btn.dataset.color;
-                // 若點選顏色時還在拖曳模式，自動貼心切換至「畫實線」模式
                 if (interactionMode === 'move') {
                     interactionMode = 'draw-solid';
                     updateModeUI();
@@ -880,8 +1163,18 @@
             });
         });
 
-        document.getElementById('btn-11v11').addEventListener('click', () => { if (currentMode !== '11v11') initBoard('11v11'); });
-        document.getElementById('btn-5v5').addEventListener('click', () => { if (currentMode !== '5v5') initBoard('5v5'); });
+        document.getElementById('btn-11v11').addEventListener('click', () => {
+            if (currentMode !== '11v11') {
+                initBoard('11v11');
+                saveBoardStateToLocal();
+            }
+        });
+        document.getElementById('btn-5v5').addEventListener('click', () => {
+            if (currentMode !== '5v5') {
+                initBoard('5v5');
+                saveBoardStateToLocal();
+            }
+        });
         
         document.getElementById('btn-reset').addEventListener('click', () => {
             document.querySelectorAll('.token').forEach(el => {
@@ -895,13 +1188,15 @@
                 }
                 setTimeout(() => el.style.transition = '', 300);
             });
-            setTimeout(renderCanvas, 50);
+            setTimeout(() => {
+                renderCanvas();
+                saveBoardStateToLocal();
+            }, 50);
             setTimeout(renderCanvas, 320);
         });
 
-        document.getElementById('btn-fov').addEventListener('click', (e) => {
-            fovActive = !fovActive;
-            const btn = e.currentTarget;
+        function updateFovButtonUI() {
+            const btn = document.getElementById('btn-fov');
             if (fovActive) {
                 btn.classList.replace('bg-yellow-400', 'bg-yellow-600');
                 btn.classList.replace('text-yellow-900', 'text-white');
@@ -909,7 +1204,13 @@
                 btn.classList.replace('bg-yellow-600', 'bg-yellow-400');
                 btn.classList.replace('text-white', 'text-yellow-900');
             }
+        }
+
+        document.getElementById('btn-fov').addEventListener('click', () => {
+            fovActive = !fovActive;
+            updateFovButtonUI();
             renderCanvas();
+            saveBoardStateToLocal();
         });
 
         function updateModeUI() {
@@ -957,17 +1258,25 @@
         document.getElementById('btn-draw-line').addEventListener('click', () => { interactionMode = 'draw-line'; updateModeUI(); });
         document.getElementById('btn-draw-solid').addEventListener('click', () => { interactionMode = 'draw-solid'; updateModeUI(); });
         document.getElementById('btn-draw-dashed').addEventListener('click', () => { interactionMode = 'draw-dashed'; updateModeUI(); });
-        document.getElementById('btn-undo-arrow').addEventListener('click', () => { arrows.pop(); renderCanvas(); });
-        document.getElementById('btn-clear-arrows').addEventListener('click', () => { arrows = []; renderCanvas(); });
+        document.getElementById('btn-undo-arrow').addEventListener('click', () => {
+            arrows.pop();
+            renderCanvas();
+            saveBoardStateToLocal();
+        });
+        document.getElementById('btn-clear-arrows').addEventListener('click', () => {
+            arrows = [];
+            renderCanvas();
+            saveBoardStateToLocal();
+        });
 
         function updateTabUI() {
             const btn11 = document.getElementById('btn-11v11'), btn5 = document.getElementById('btn-5v5');
             if (currentMode === '11v11') {
-                btn11.className = "px-2.5 py-1.5 rounded-md bg-white shadow text-gray-800 transition-all";
-                btn5.className = "px-2.5 py-1.5 rounded-md text-gray-600 hover:text-gray-800 transition-all";
+                btn11.className = "px-2.5 py-1 rounded-md bg-white shadow text-gray-800 transition-all";
+                btn5.className = "px-2.5 py-1 rounded-md text-gray-600 hover:text-gray-800 transition-all";
             } else {
-                btn5.className = "px-2.5 py-1.5 rounded-md bg-white shadow text-gray-800 transition-all";
-                btn11.className = "px-2.5 py-1.5 rounded-md text-gray-600 hover:text-gray-800 transition-all";
+                btn5.className = "px-2.5 py-1 rounded-md bg-white shadow text-gray-800 transition-all";
+                btn11.className = "px-2.5 py-1 rounded-md text-gray-600 hover:text-gray-800 transition-all";
             }
         }
 
@@ -999,7 +1308,17 @@
             nameModal.classList.add('hidden');
         });
 
-        initBoard('11v11');
+        // 啟動時載入 localStorage 保存的戰術狀態（若無則預設 11v11）
+        const savedState = loadBoardStateFromLocal();
+        if (savedState) {
+            currentMode = savedState.currentMode || '11v11';
+            fovActive = !!savedState.fovActive;
+            arrows = Array.isArray(savedState.arrows) ? savedState.arrows : [];
+            updateFovButtonUI();
+            initBoard(currentMode, savedState.positions || null);
+        } else {
+            initBoard('11v11');
+        }
     </script>
 </body>
 </html>
