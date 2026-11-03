@@ -340,6 +340,39 @@
         </div>
     </main>
 
+    <!-- 底部戰術動畫播放控制列 -->
+    <footer class="bg-gray-800 border-t border-gray-700 px-3 py-2 md:px-5 md:py-2.5 flex flex-wrap items-center justify-between gap-2 text-white z-50 shrink-0">
+        <div class="flex items-center gap-2 overflow-x-auto max-w-full py-0.5">
+            <span class="text-xs md:text-sm font-bold text-emerald-400 whitespace-nowrap flex items-center gap-1">
+                🎬 戰術動畫：
+            </span>
+            <div id="keyframes-list" class="flex items-center gap-1.5">
+                <span class="text-xs text-gray-400">直接從球員畫箭頭即可按「播放」，或點「＋記錄步驟」建立連續分解動作</span>
+            </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+            <button id="btn-add-step" class="bg-indigo-600 hover:bg-indigo-500 text-white px-2.5 py-1.5 rounded-lg shadow text-xs md:text-sm font-medium transition-colors flex items-center gap-1" title="將目前球員與球的位置記錄為一個戰術步驟">
+                ➕ 記錄步驟
+            </button>
+            <button id="btn-play-anim" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg shadow text-xs md:text-sm font-bold transition-colors flex items-center gap-1 min-w-[92px] justify-center">
+                ▶ 播放戰術
+            </button>
+            <button id="btn-rewind-anim" class="bg-gray-700 hover:bg-gray-600 text-gray-200 px-2.5 py-1.5 rounded-lg shadow text-xs md:text-sm font-medium transition-colors" title="回到動畫開始前的站位">
+                ⏮ 回到起點
+            </button>
+            <button id="btn-loop-anim" class="bg-gray-700 hover:bg-gray-600 text-gray-300 px-2.5 py-1.5 rounded-lg shadow text-xs md:text-sm font-medium transition-colors" title="切換循環播放">
+                🔁 循環: 關
+            </button>
+            <button id="btn-speed-anim" class="bg-gray-700 hover:bg-gray-600 text-gray-200 px-2.5 py-1.5 rounded-lg shadow text-xs md:text-sm font-medium transition-colors min-w-[54px]" title="切換播放速度">
+                1.0x
+            </button>
+            <button id="btn-clear-steps" class="bg-gray-700 hover:bg-red-600 text-gray-300 hover:text-white px-2.5 py-1.5 rounded-lg shadow text-xs md:text-sm font-medium transition-colors" title="清除所有已記錄的步驟">
+                🗑️ 清除步驟
+            </button>
+        </div>
+    </footer>
+
     <!-- 姓名輸入 Modal -->
     <div id="name-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 z-[9999] flex items-center justify-center p-4">
         <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-sm">
@@ -1225,6 +1258,8 @@
             if (activeType === 'token' && activeElement) {
                 if (!isDragging && activeElement.dataset.id !== 'ball') {
                     openNameModal(activeElement.dataset.id);
+                } else if (isDragging && keyframes.length === 0) {
+                    preAnimSnapshot = null; // 手動移動球員後，以最新位置作為下次箭頭動畫的起點
                 }
                 if (activeElement.dataset.id !== 'ball') {
                     activeElement.style.zIndex = '20';
@@ -1290,18 +1325,28 @@
 
         document.getElementById('btn-11v11').addEventListener('click', () => {
             if (currentMode !== '11v11') {
+                stopTacticalAnimation();
+                keyframes = [];
+                preAnimSnapshot = null;
+                renderKeyframesUI();
                 initBoard('11v11');
                 saveBoardStateToLocal();
             }
         });
         document.getElementById('btn-5v5').addEventListener('click', () => {
             if (currentMode !== '5v5') {
+                stopTacticalAnimation();
+                keyframes = [];
+                preAnimSnapshot = null;
+                renderKeyframesUI();
                 initBoard('5v5');
                 saveBoardStateToLocal();
             }
         });
         
         document.getElementById('btn-reset').addEventListener('click', () => {
+            stopTacticalAnimation();
+            preAnimSnapshot = null;
             document.querySelectorAll('.token').forEach(el => {
                 el.style.transition = 'left 0.3s ease, top 0.3s ease';
                 const defX = parseFloat(el.dataset.defaultX);
@@ -1433,17 +1478,374 @@
             nameModal.classList.add('hidden');
         });
 
-        // 啟動時載入 localStorage 保存的戰術狀態（若無則預設 11v11）
-        const savedState = loadBoardStateFromLocal();
-        if (savedState) {
-            currentMode = savedState.currentMode || '11v11';
-            fovActive = !!savedState.fovActive;
-            arrows = Array.isArray(savedState.arrows) ? savedState.arrows : [];
-            updateFovButtonUI();
-            initBoard(currentMode, savedState.positions || null);
-        } else {
-            initBoard('11v11');
+        // =======================
+        // 🎬 戰術動畫播放系統 (支援「手繪箭頭自動跑位」與「多步驟關鍵影格連續動畫」)
+        // =======================
+        let keyframes = []; // 每個元素為 { positions: { r1: [x,y], ... } }
+        let isPlayingAnim = false;
+        let animLoop = false;
+        let animSpeed = 1.0; // 0.5x, 1.0x, 1.5x
+        let animReqId = null;
+        let preAnimSnapshot = null; // 保存按下播放前的原始站位，方便「回到起點」
+        let activeKeyframeIdx = -1;
+
+        const btnAddStep = document.getElementById('btn-add-step');
+        const btnPlayAnim = document.getElementById('btn-play-anim');
+        const btnRewindAnim = document.getElementById('btn-rewind-anim');
+        const btnLoopAnim = document.getElementById('btn-loop-anim');
+        const btnSpeedAnim = document.getElementById('btn-speed-anim');
+        const btnClearSteps = document.getElementById('btn-clear-steps');
+        const keyframesListEl = document.getElementById('keyframes-list');
+
+        // 擷取目前場上所有球員與足球的百分比座標快照
+        function capturePositionsSnapshot() {
+            const snap = {};
+            document.querySelectorAll('.token').forEach(el => {
+                snap[el.dataset.id] = [
+                    parseFloat(el.style.left),
+                    parseFloat(el.style.top)
+                ];
+            });
+            return snap;
         }
+
+        // 將指定快照套用到場上所有球員與足球
+        function applyPositionsSnapshot(snap, smooth = false) {
+            if (!snap) return;
+            document.querySelectorAll('.token').forEach(el => {
+                const id = el.dataset.id;
+                if (snap[id]) {
+                    el.style.transition = smooth ? 'left 0.25s ease, top 0.25s ease' : 'none';
+                    el.style.left = `${snap[id][0]}%`;
+                    el.style.top = `${snap[id][1]}%`;
+                    if (id === 'ball') {
+                        ballState.pos = [snap[id][0], snap[id][1]];
+                    }
+                    if (smooth) {
+                        setTimeout(() => { el.style.transition = 'none'; }, 260);
+                    }
+                }
+            });
+            renderCanvas();
+        }
+
+        // 平滑緩動函數 (Ease-In-Out Cubic)
+        function easeInOutCubic(t) {
+            return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+        }
+
+        // 依弧長比例 (0 ~ 1) 在自由曲線軌跡 points 上等速取樣座標
+        function samplePointAlongCurve(points, progress) {
+            if (!points || points.length === 0) return [50, 50];
+            if (points.length === 1 || progress <= 0) return [points[0].x, points[0].y];
+            if (progress >= 1) return [points[points.length - 1].x, points[points.length - 1].y];
+
+            // 計算累積弧長
+            const cumLengths = [0];
+            let totalLen = 0;
+            for (let i = 1; i < points.length; i++) {
+                const segLen = Math.hypot(points[i].x - points[i - 1].x, points[i].y - points[i - 1].y);
+                totalLen += segLen;
+                cumLengths.push(totalLen);
+            }
+            if (totalLen < 1e-4) return [points[0].x, points[0].y];
+
+            const targetLen = progress * totalLen;
+            for (let i = 1; i < cumLengths.length; i++) {
+                if (cumLengths[i] >= targetLen) {
+                    const prevLen = cumLengths[i - 1];
+                    const segRatio = (targetLen - prevLen) / Math.max(1e-5, cumLengths[i] - prevLen);
+                    const x = points[i - 1].x + (points[i].x - points[i - 1].x) * segRatio;
+                    const y = points[i - 1].y + (points[i].y - points[i - 1].y) * segRatio;
+                    return [x, y];
+                }
+            }
+            return [points[points.length - 1].x, points[points.length - 1].y];
+        }
+
+        // 更新底部步驟列 UI
+        function renderKeyframesUI() {
+            keyframesListEl.innerHTML = '';
+            if (keyframes.length === 0) {
+                const hint = document.createElement('span');
+                hint.className = 'text-xs text-gray-400';
+                hint.innerText = '直接從球員/球畫箭頭即可按「播放」，或點「＋記錄步驟」建立連續分解動作';
+                keyframesListEl.appendChild(hint);
+                return;
+            }
+
+            keyframes.forEach((kf, idx) => {
+                const badge = document.createElement('button');
+                const isActive = idx === activeKeyframeIdx;
+                badge.className = `px-2.5 py-1 rounded-md text-xs font-bold transition-all whitespace-nowrap ${
+                    isActive
+                        ? 'bg-emerald-500 text-white shadow ring-2 ring-emerald-300'
+                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                }`;
+                badge.innerText = `步驟 ${idx + 1}`;
+                badge.title = `點擊切換預覽步驟 ${idx + 1}`;
+                badge.addEventListener('click', () => {
+                    stopTacticalAnimation();
+                    activeKeyframeIdx = idx;
+                    applyPositionsSnapshot(keyframes[idx].positions, true);
+                    renderKeyframesUI();
+                });
+                keyframesListEl.appendChild(badge);
+            });
+        }
+
+        function updatePlayButtonUI() {
+            if (isPlayingAnim) {
+                btnPlayAnim.innerHTML = '⏸ 暫停';
+                btnPlayAnim.classList.replace('bg-emerald-600', 'bg-amber-500');
+                btnPlayAnim.classList.replace('hover:bg-emerald-500', 'hover:bg-amber-400');
+            } else {
+                btnPlayAnim.innerHTML = '▶ 播放戰術';
+                btnPlayAnim.classList.replace('bg-amber-500', 'bg-emerald-600');
+                btnPlayAnim.classList.replace('hover:bg-amber-400', 'hover:bg-emerald-500');
+            }
+        }
+
+        function stopTacticalAnimation() {
+            if (animReqId) {
+                cancelAnimationFrame(animReqId);
+                animReqId = null;
+            }
+            isPlayingAnim = false;
+            updatePlayButtonUI();
+        }
+
+        // 建立「手繪箭頭自動配對球員/球」的跑位任務清單
+        function buildArrowAnimationTasks(startSnap) {
+            const validArrows = arrows.filter(a => (a.type === 'solid' || a.type === 'dashed') && a.points && a.points.length >= 2);
+            if (validArrows.length === 0) return [];
+
+            const tasks = [];
+            const assignedTokenIds = new Set();
+            const SNAP_RADIUS_PCT = 12; // 箭頭起點半徑 12% 內自動吸附球員或足球
+
+            // 先配對虛線箭頭 (優先配對給足球，代表傳球或射門路線)
+            validArrows.forEach(arr => {
+                const startPt = arr.points[0];
+                if (arr.type === 'dashed' && startSnap['ball'] && !assignedTokenIds.has('ball')) {
+                    const distBall = Math.hypot(startSnap['ball'][0] - startPt.x, startSnap['ball'][1] - startPt.y);
+                    if (distBall <= SNAP_RADIUS_PCT * 1.25) {
+                        assignedTokenIds.add('ball');
+                        tasks.push({ tokenId: 'ball', points: arr.points });
+                        return;
+                    }
+                }
+
+                // 尋找距離該箭頭起點最近且尚未指派的球員或球
+                let bestId = null;
+                let bestDist = SNAP_RADIUS_PCT;
+                Object.entries(startSnap).forEach(([id, pos]) => {
+                    if (assignedTokenIds.has(id)) return;
+                    const d = Math.hypot(pos[0] - startPt.x, pos[1] - startPt.y);
+                    if (d <= bestDist) {
+                        bestDist = d;
+                        bestId = id;
+                    }
+                });
+
+                if (bestId) {
+                    assignedTokenIds.add(bestId);
+                    tasks.push({ tokenId: bestId, points: arr.points });
+
+                    // 若該球員腳下正好有球 (距離球 < 5%)，且球沒有獨立的傳球虛線，讓球跟著該球員一起盤帶移動！
+                    if (bestId !== 'ball' && startSnap['ball'] && !assignedTokenIds.has('ball')) {
+                        const distToBall = Math.hypot(startSnap[bestId][0] - startSnap['ball'][0], startSnap[bestId][1] - startSnap['ball'][1]);
+                        const hasOtherBallArrow = validArrows.some(other =>
+                            other !== arr &&
+                            Math.hypot(startSnap['ball'][0] - other.points[0].x, startSnap['ball'][1] - other.points[0].y) <= SNAP_RADIUS_PCT
+                        );
+                        if (distToBall <= 5.5 && !hasOtherBallArrow) {
+                            assignedTokenIds.add('ball');
+                            tasks.push({
+                                tokenId: 'ball',
+                                points: arr.points.map(p => ({ x: p.x + 1.2, y: p.y + 1.2 }))
+                            });
+                        }
+                    }
+                }
+            });
+
+            return tasks;
+        }
+
+        function startTacticalAnimation() {
+            // 若已有至少 2 個錄製步驟 -> 播放多步驟關鍵影格動畫
+            if (keyframes.length >= 2) {
+                if (!preAnimSnapshot) preAnimSnapshot = capturePositionsSnapshot();
+                isPlayingAnim = true;
+                updatePlayButtonUI();
+
+                const segmentDurationMs = 1400 / animSpeed;
+                const totalSegments = keyframes.length - 1;
+                let currentSeg = 0;
+                let segStartTime = performance.now();
+
+                activeKeyframeIdx = 0;
+                applyPositionsSnapshot(keyframes[0].positions, false);
+                renderKeyframesUI();
+
+                const stepLoop = (now) => {
+                    if (!isPlayingAnim) return;
+                    const elapsed = now - segStartTime;
+                    const rawT = Math.min(1, elapsed / segmentDurationMs);
+                    const easedT = easeInOutCubic(rawT);
+
+                    const fromPos = keyframes[currentSeg].positions;
+                    const toPos = keyframes[currentSeg + 1].positions;
+                    const interpSnap = {};
+
+                    Object.keys(fromPos).forEach(id => {
+                        const [x1, y1] = fromPos[id];
+                        const [x2, y2] = toPos[id] || [x1, y1];
+                        interpSnap[id] = [
+                            x1 + (x2 - x1) * easedT,
+                            y1 + (y2 - y1) * easedT
+                        ];
+                    });
+
+                    applyPositionsSnapshot(interpSnap, false);
+
+                    if (rawT < 1) {
+                        animReqId = requestAnimationFrame(stepLoop);
+                    } else {
+                        currentSeg++;
+                        activeKeyframeIdx = currentSeg;
+                        renderKeyframesUI();
+                        if (currentSeg < totalSegments) {
+                            segStartTime = performance.now();
+                            animReqId = requestAnimationFrame(stepLoop);
+                        } else if (animLoop) {
+                            setTimeout(() => {
+                                if (!isPlayingAnim) return;
+                                currentSeg = 0;
+                                activeKeyframeIdx = 0;
+                                renderKeyframesUI();
+                                segStartTime = performance.now();
+                                animReqId = requestAnimationFrame(stepLoop);
+                            }, 350);
+                        } else {
+                            stopTacticalAnimation();
+                        }
+                    }
+                };
+
+                animReqId = requestAnimationFrame(stepLoop);
+                return;
+            }
+
+            // 若未錄製多步驟，改走「手繪箭頭自動跑位/傳球動畫」
+            const baseSnap = preAnimSnapshot || capturePositionsSnapshot();
+            const arrowTasks = buildArrowAnimationTasks(baseSnap);
+
+            if (arrowTasks.length === 0) {
+                // 閃爍提示使用者畫箭頭或記錄步驟
+                keyframesListEl.innerHTML = '<span class="text-xs text-amber-300 font-semibold">💡 請先從球員或足球旁畫出「實線/虛線箭頭」，或移動球員後點「＋記錄步驟」（至少 2 步）即可播放動畫！</span>';
+                return;
+            }
+
+            preAnimSnapshot = baseSnap;
+            applyPositionsSnapshot(preAnimSnapshot, false);
+            isPlayingAnim = true;
+            updatePlayButtonUI();
+
+            const durationMs = 1800 / animSpeed;
+            let startTime = performance.now();
+
+            const arrowAnimLoop = (now) => {
+                if (!isPlayingAnim) return;
+                const elapsed = now - startTime;
+                const rawT = Math.min(1, elapsed / durationMs);
+                const easedT = easeInOutCubic(rawT);
+
+                const frameSnap = { ...preAnimSnapshot };
+                arrowTasks.forEach(task => {
+                    frameSnap[task.tokenId] = samplePointAlongCurve(task.points, easedT);
+                });
+
+                applyPositionsSnapshot(frameSnap, false);
+
+                if (rawT < 1) {
+                    animReqId = requestAnimationFrame(arrowAnimLoop);
+                } else if (animLoop) {
+                    setTimeout(() => {
+                        if (!isPlayingAnim) return;
+                        applyPositionsSnapshot(preAnimSnapshot, false);
+                        startTime = performance.now();
+                        animReqId = requestAnimationFrame(arrowAnimLoop);
+                    }, 400);
+                } else {
+                    stopTacticalAnimation();
+                }
+            };
+
+            animReqId = requestAnimationFrame(arrowAnimLoop);
+        }
+
+        // 綁定動畫控制列按鈕事件
+        btnAddStep.addEventListener('click', () => {
+            stopTacticalAnimation();
+            const snap = capturePositionsSnapshot();
+            if (keyframes.length === 0) {
+                preAnimSnapshot = snap;
+            }
+            keyframes.push({ positions: snap });
+            activeKeyframeIdx = keyframes.length - 1;
+            renderKeyframesUI();
+        });
+
+        btnPlayAnim.addEventListener('click', () => {
+            if (isPlayingAnim) {
+                stopTacticalAnimation();
+            } else {
+                startTacticalAnimation();
+            }
+        });
+
+        btnRewindAnim.addEventListener('click', () => {
+            stopTacticalAnimation();
+            if (keyframes.length > 0) {
+                activeKeyframeIdx = 0;
+                applyPositionsSnapshot(keyframes[0].positions, true);
+                renderKeyframesUI();
+            } else if (preAnimSnapshot) {
+                applyPositionsSnapshot(preAnimSnapshot, true);
+            }
+        });
+
+        btnLoopAnim.addEventListener('click', () => {
+            animLoop = !animLoop;
+            btnLoopAnim.innerText = animLoop ? '🔁 循環: 開' : '🔁 循環: 關';
+            if (animLoop) {
+                btnLoopAnim.classList.replace('bg-gray-700', 'bg-teal-600');
+                btnLoopAnim.classList.replace('text-gray-300', 'text-white');
+            } else {
+                btnLoopAnim.classList.replace('bg-teal-600', 'bg-gray-700');
+                btnLoopAnim.classList.replace('text-white', 'text-gray-300');
+            }
+        });
+
+        const speedOptions = [0.5, 1.0, 1.5];
+        btnSpeedAnim.addEventListener('click', () => {
+            const idx = (speedOptions.indexOf(animSpeed) + 1) % speedOptions.length;
+            animSpeed = speedOptions[idx];
+            btnSpeedAnim.innerText = `${animSpeed.toFixed(1)}x`;
+        });
+
+        btnClearSteps.addEventListener('click', () => {
+            stopTacticalAnimation();
+            keyframes = [];
+            activeKeyframeIdx = -1;
+            preAnimSnapshot = null;
+            renderKeyframesUI();
+        });
+
+        // 啟動時固定預設載入 11人制 ('11v11')
+        initBoard('11v11');
     </script>
 </body>
 </html>
