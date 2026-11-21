@@ -1,0 +1,232 @@
+{
+  "schemaVersion": 1,
+  "description": "《ASLSK Starter Kit #1》官方劇本資料庫 (S1–S6)。支援 deployHexes、deployCols (+ minRow/maxRow)、deployZones、deployFilter (hexgrain_side)、entryEdge (+ entryCols) 與 maxMMCPerHex 等擴充欄位。",
+  "scenarios": [
+    {
+      "id": "S1",
+      "title": "S1: Retaking Vierville",
+      "turns": 5,
+      "firstPlayer": "GERMAN",
+      "mapConfig": {
+        "mode": "single",
+        "board": "Y",
+        "northDirection": "UP",
+        "playableCols": ["A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V"]
+      },
+      "victoryText": "遊戲結束時，若建築 N5、N6、M4 與 L3 內皆無正常狀態（Good Order）德軍單位，美軍即獲勝。【SSR】無（None）。",
+      "ssr": "無（None）。",
+      "setup": {
+        "US": {
+          "board": "Y",
+          "deployCols": ["L","M","N"],
+          "deployHexes": ["N3", "N4", "M5", "L5"],
+          "maxMMCPerHex": 1,
+          "deployNote": "先部署於道路格 N3、N4、M5、L5，每格至多 1 個 MMC；第 1、2、3 回合 7-4-7 傘兵增援自北緣進場",
+          "units": ["us_747", "us_747", "us_747", "us_337", "us_8_1"],
+          "reinforcements": [
+            { "turn": 1, "entryEdge": "NORTH", "units": ["us_747", "us_747", "us_747", "us_8_1"] },
+            { "turn": 2, "entryEdge": "NORTH", "units": ["us_747", "us_747", "us_8_0"] },
+            { "turn": 3, "entryEdge": "NORTH", "units": ["us_747", "us_747", "us_337", "us_337", "us_9_2"] }
+          ]
+        },
+        "GERMAN": {
+          "board": "Y",
+          "enterTurn": 1,
+          "entryEdge": "EAST",
+          "entryNote": "先攻：第 1 回合 1058 團自東緣進入、919 團自西緣進入；第 2、3 回合第 6 空降獵兵團自東緣進入",
+          "units": ["ge_467", "ge_467", "ge_467", "ge_8_1"],
+          "reinforcements": [
+            { "turn": 1, "entryEdge": "WEST", "units": ["ge_447", "ge_447", "ge_447", "ge_7_0"] },
+            { "turn": 2, "entryEdge": "EAST", "units": ["ge_548", "ge_548", "ge_548", "ge_9_1"] },
+            { "turn": 3, "entryEdge": "EAST", "units": ["ge_548", "ge_548", "ge_9_1"] }
+          ]
+        }
+      }
+    },
+    {
+      "id": "S2",
+      "title": "S2: War of the Rats",
+      "turns": 6,
+      "firstPlayer": "GERMAN",
+      "mapConfig": {
+        "mode": "single",
+        "board": "Z",
+        "northDirection": "UP",
+        "playableCols": ["A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P"]
+      },
+      "victoryText": "遊戲結束時，德軍控制建築 F8、L6 與 O6 即獲勝。【SSR 1】德軍 5-4-8 步兵班的煙霧指數 +2（擲 1d6 ≤ 4 即可放置煙霧）。",
+      "ssr": "1. 德軍 5-4-8 步兵班的煙霧指數增加 2（擲 1d6 ≤ 4 即可放置煙霧）。",
+      "setup": {
+        "RUSSIAN": {
+          "board": "Z",
+          "deployCols": ["A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P"],
+          "deployFilter": {
+            "type": "hexgrain_side",
+            "side": "SOUTH",
+            "inclusive": false,
+            "line": {
+              "A": 9, "B": 8, "C": 8, "D": 7, "E": 7, "F": 6, "G": 6, "H": 5,
+              "I": 5, "J": 4, "K": 4, "L": 4, "M": 4, "N": 4, "O": 4, "P": 4
+            }
+          },
+          "deployNote": "先部署於 hexgrain A9–K4–P4 以南（不含分隔線本身）；臨時突擊群（3× 5-2-7、9-2、LMG）自第 2 回合起於 dr < 當前回合數時自南緣進場",
+          "units": ["ru_447", "ru_447", "ru_447", "ru_447", "ru_447", "ru_426", "ru_426", "ru_426", "ru_426", "ru_426", "ru_8_1", "ru_8_0", "ru_7_0", "ru_mmg", "ru_lmg", "ru_lmg"],
+          "reinforcements": [
+            { "turn": 2, "entryEdge": "SOUTH", "units": ["ru_527", "ru_527", "ru_527", "ru_9_2", "ru_lmg"] }
+          ]
+        },
+        "GERMAN": {
+          "board": "Z",
+          "deployCols": ["A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P"],
+          "deployFilter": {
+            "type": "hexgrain_side",
+            "side": "NORTH",
+            "inclusive": false,
+            "line": {
+              "A": 9, "B": 8, "C": 8, "D": 7, "E": 7, "F": 6, "G": 6, "H": 5,
+              "I": 5, "J": 4, "K": 4, "L": 4, "M": 4, "N": 4, "O": 4, "P": 4
+            }
+          },
+          "deployNote": "先攻：部署於 hexgrain A9–K4–P4 以北（不含分隔線本身；第 94 步兵師，含 1× FT 與 2× DC 炸藥包）",
+          "units": ["ge_548", "ge_548", "ge_548", "ge_548", "ge_467", "ge_467", "ge_467", "ge_467", "ge_467", "ge_467", "ge_467", "ge_9_2", "ge_9_1", "ge_8_1", "ge_8_0", "ge_mmg", "ge_lmg", "ge_lmg", "ge_lmg", "ge_ft", "ge_dc", "ge_dc"]
+        }
+      }
+    },
+    {
+      "id": "S3",
+      "title": "S3: Simple Equation",
+      "turns": 6.5,
+      "firstPlayer": "US",
+      "mapConfig": {
+        "mode": "half_join",
+        "northDirection": "UP",
+        "left": { "board": "Y", "cols": ["A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P"] },
+        "right": { "board": "Z", "cols": ["R","S","T","U","V","W","X","Y","Z","AA","BB","CC","DD","EE","FF","GG"] }
+      },
+      "victoryText": "美軍只要立即控制 Map Z 上 ≥ 25 個建築六角格即立刻獲勝。【SSR 1】德軍可於部署區秘密指定 2 棟「強化建築（Fortified）」，獲得額外 +1 TEM（石造 +4、木造 +3）。",
+      "ssr": "1. 德軍可於部署區內秘密預先指定 2 棟建築為「強化建築（Fortified）」，獲得額外 +1 TEM（石造建築 +4、木造建築 +3）。",
+      "setup": {
+        "GERMAN": {
+          "deployZones": [
+            { "board": "Y", "cols": ["A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P"], "maxRow": 2 },
+            { "board": "Z", "cols": ["R","S","T","U","V","W","X","Y","Z","AA","BB","CC","DD","EE","FF","GG"] }
+          ],
+          "deployNote": "先部署於 Map Y（A–P 欄）編號 ≤ 2 之六角格，以及 Map Z（R–GG 欄，Q 欄不開放）",
+          "units": ["ge_447", "ge_447", "ge_447", "ge_447", "ge_447", "ge_447", "ge_447", "ge_436", "ge_436", "ge_436", "ge_436", "ge_436", "ge_8_1", "ge_8_0", "ge_7_0", "ge_7_0", "ge_hmg", "ge_lmg", "ge_lmg", "ge_lmg"]
+        },
+        "US": {
+          "board": "Y",
+          "deployCols": ["A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P"],
+          "minRow": 7,
+          "deployNote": "先攻：部署於 Map Y（A–P 欄）編號 ≥ 7 之六角格",
+          "units": ["us_666", "us_666", "us_666", "us_666", "us_666", "us_666", "us_666", "us_666", "us_666", "us_666", "us_666", "us_666", "us_666", "us_666", "us_337", "us_9_2", "us_9_1", "us_8_0", "us_8_0", "us_mmg", "us_mmg", "us_ft"]
+        }
+      }
+    },
+    {
+      "id": "S4",
+      "title": "S4: Welcome Back",
+      "turns": 5.5,
+      "firstPlayer": "GERMAN",
+      "mapConfig": {
+        "mode": "single",
+        "board": "Y",
+        "northDirection": "DOWN",
+        "playableCols": "ALL"
+      },
+      "victoryText": "德軍自西緣 I1–Y1 之間（含）累計撤出 ≥ 10 點 VP 即立刻獲勝（每班 2 VP、半班 1 VP、-1 指揮官 2 VP、-0/+1 指揮官 1 VP）。【SSR 1】每回合 RPh 進攻方擲 2d6，≥ 10 下雪（≤ 3 停雪），下雪時距離 ≥ 6 格攻擊 +1 阻礙。【SSR 2】美軍 7-4-7 煙霧指數 +2（dr ≤ 5）。",
+      "ssr": "1. 每回合 RPh 進攻方擲 2d6，≥ 10 下雪、≤ 3 停雪；下雪時距離 ≥ 6 格攻擊 +1 視線阻礙。2. 所有美軍 7-4-7 煙霧指數 +2（dr ≤ 5）。",
+      "setup": {
+        "US": {
+          "board": "Y",
+          "deployCols": ["A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z","AA","BB","CC","DD","EE","FF","GG"],
+          "minRow": 4,
+          "deployNote": "先部署於編號 ≥ 4 之六角格（含 2× 7-4-7 工兵、10-2 指揮官與 2× FT 火焰噴射器）",
+          "units": ["us_747", "us_747", "us_667", "us_666", "us_666", "us_546", "us_546", "us_546", "us_10_2", "us_8_1", "us_8_0", "us_hmg", "us_mmg", "us_mmg", "us_ft", "us_ft"]
+        },
+        "GERMAN": {
+          "board": "Y",
+          "enterTurn": 1,
+          "entryEdge": "EAST",
+          "entryNote": "先攻：第 1 回合自東側邊界進入（第 26 國民擲彈兵師）",
+          "units": ["ge_447", "ge_447", "ge_447", "ge_447", "ge_447", "ge_447", "ge_447", "ge_447", "ge_447", "ge_447", "ge_447", "ge_447", "ge_447", "ge_447", "ge_237", "ge_237", "ge_9_1", "ge_8_1", "ge_8_1", "ge_7_0", "ge_7_0", "ge_mmg", "ge_mmg", "ge_lmg", "ge_lmg", "ge_lmg"]
+        }
+      }
+    },
+    {
+      "id": "S5",
+      "title": "S5: Clearing Colleville",
+      "turns": 5,
+      "firstPlayer": "US",
+      "mapConfig": {
+        "mode": "single",
+        "board": "Y",
+        "northDirection": "DOWN",
+        "playableCols": "ALL"
+      },
+      "victoryText": "遊戲結束時，距離 M5 三格以內（≤ 3 格）的所有石造建築六角格內若無正常狀態（Good Order）德軍 MMC，美軍即獲勝。【SSR 1】前兩回合美軍 RPh 前各擲 1d6 決定增援之 3-4-6 半班數（dr 1–3：T1 獲 4 / T2 獲 5；dr 4–6：T1 獲 3 / T2 獲 4）。",
+      "ssr": "1. 前兩回合美軍集結階段前各擲 1d6 決定當回合增援之 3-4-6 半班數量（dr 1–3：T1 獲 4 個、T2 獲 5 個；dr 4–6：T1 獲 3 個、T2 獲 4 個）。",
+      "setup": {
+        "GERMAN": {
+          "board": "Y",
+          "deployCols": ["H","I","J","K","L","M","N","O","P","Q","R"],
+          "deployNote": "先部署於 H–R 欄內（含 6+1 指揮官）；第 2 回合增援自南緣進入",
+          "units": ["ge_467", "ge_467", "ge_467", "ge_467", "ge_467", "ge_467", "ge_8_1", "ge_6_p1", "ge_hmg", "ge_lmg"],
+          "reinforcements": [
+            { "turn": 2, "entryEdge": "SOUTH", "units": ["ge_467", "ge_467", "ge_467", "ge_467", "ge_8_0", "ge_mmg"] }
+          ]
+        },
+        "US": {
+          "board": "Y",
+          "deployCols": ["T","U","V","W","X","Y","Z","AA","BB","CC","DD","EE","FF","GG"],
+          "deployNote": "先攻：初始部隊部署於 T 欄或以西（旋轉後為 T–GG 欄）；T1 增援自北緣 N10 或以西、T2 增援自北緣 J10 或以西進入（依 SSR 1 擲骰增減 3-4-6 半班）",
+          "units": ["us_666", "us_666", "us_666", "us_666", "us_346", "us_9_1", "us_mmg"],
+          "reinforcements": [
+            {
+              "turn": 1,
+              "entryEdge": "NORTH",
+              "entryCols": ["N","O","P","Q","R","S","T","U","V","W","X","Y","Z","AA","BB","CC","DD","EE","FF","GG"],
+              "units": ["us_666", "us_666", "us_666", "us_346", "us_346", "us_346", "us_346", "us_9_2", "us_8_0", "us_mmg"]
+            },
+            {
+              "turn": 2,
+              "entryEdge": "NORTH",
+              "entryCols": ["J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z","AA","BB","CC","DD","EE","FF","GG"],
+              "units": ["us_666", "us_666", "us_346", "us_346", "us_346", "us_346", "us_8_1", "us_mmg"]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "S6",
+      "title": "S6: Released from the East",
+      "turns": 5.5,
+      "firstPlayer": "RUSSIAN",
+      "mapConfig": {
+        "mode": "single",
+        "board": "Z",
+        "northDirection": "DOWN",
+        "playableCols": "ALL"
+      },
+      "victoryText": "遊戲結束時，蘇軍控制 R2、L6、D3 三棟建築中之至少兩棟即獲勝。【SSR 1】冬季偽裝：蘇軍步兵於空地突擊移動免除 FFMO。【SSR 2】蘇軍可將最多 5 MMC、1 SMC、2 SW 留作戰術預備隊，於第 3 回合自北緣及／或東緣進場。【SSR 3】所有德軍 MMC 崩潰面士氣 +1。",
+      "ssr": "1. 冬季偽裝：蘇軍步兵於空地突擊移動（Assault Move）免除 FFMO 懲罰。2. 蘇軍可保留最多 5 MMC、1 SMC、2 SW 為戰術預備隊，於第 3 回合自北緣及／或東緣進場。3. 所有德軍 MMC 崩潰面士氣（Broken Morale）+1。",
+      "setup": {
+        "GERMAN": {
+          "board": "Z",
+          "deployCols": ["A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z","AA","BB","CC","DD","EE","FF","GG"],
+          "maxRow": 9,
+          "deployNote": "先部署於 Map Z 任何編號 ≤ 9 之六角格（第 2 SS 裝甲師「帝國師」，ELR 4，SSR 3 崩潰士氣 +1）",
+          "units": ["ge_468", "ge_468", "ge_468", "ge_468", "ge_468", "ge_468", "ge_468", "ge_468", "ge_468", "ge_9_2", "ge_8_1", "ge_8_0", "ge_mmg", "ge_lmg", "ge_lmg", "ge_lmg"]
+        },
+        "RUSSIAN": {
+          "board": "Z",
+          "enterTurn": 1,
+          "entryEdge": "NORTH",
+          "entryNote": "先攻：第 1 回合自北側邊界（旋轉後 10 排）進入，可依 SSR 2 保留最多 5 MMC / 1 SMC / 2 SW 於第 3 回合自北／東緣進場",
+          "units": ["ru_458", "ru_458", "ru_458", "ru_458", "ru_458", "ru_458", "ru_458", "ru_458", "ru_458", "ru_458", "ru_458", "ru_458", "ru_458", "ru_458", "ru_9_1", "ru_8_1", "ru_8_0", "ru_mmg", "ru_lmg", "ru_lmg", "ru_dc"]
+        }
+      }
+    }
+  ]
+}
